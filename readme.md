@@ -1,4 +1,5 @@
 # SwAMP Demo User's Manual
+![Artist's Rendition of SwAMP](http://i.imgur.com/29r8l6B.png)
 
 Using this demo is supposed to be straightforward: one needs only to
 open Matlab, go to the current folder and run the command `demo`.
