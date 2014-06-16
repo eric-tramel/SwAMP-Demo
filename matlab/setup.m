@@ -5,7 +5,7 @@ function setup
     cflags = '-largeArrayDims';
 
     fprintf('Compiling SwAMP... ')
-    eval([cxx ' ' cflags ' -o bin/swamp src/swamp.c ' src])
-    eval([cxx ' ' cflags ' -o bin/swgamp src/swgamp.c ' src]);
+    eval([cxx ' ' cflags ' -output bin/swamp src/swamp.c ' src])
+    eval([cxx ' ' cflags ' -output bin/swgamp src/swgamp.c ' src]);
     fprintf('Done!\n')
 end
