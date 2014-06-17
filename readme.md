@@ -37,3 +37,4 @@ A. Manoel, F. Krzakala, E. W. Tramel, L. Zdeborová,
     * `amp_dense.c`, a version that isn't optimized for sparse matrices; 
     * and `amp_alt.c`, a slight modification of the algorithm that, in spite of reaching the same results, sometimes converges faster.
 
+
