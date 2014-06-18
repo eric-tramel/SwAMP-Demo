@@ -11,11 +11,13 @@ We have tested the compilation using `gcc` in different platforms, but we'd
 expect it to work with other compilers as well. Make sure to run `mex -setup` if you have no previously used Matlab's MEX feature. 
 
 If you have problems, you can try the Python version which, in spite of
-being much slower, achieves the same results.
+being much slower, achieves the same results. 
+
+The SwAMP repository is [hosted on GitHub.](https://github.com/eric-tramel/SwAMP-Demo). 
 
 ## Key Reference
 A. Manoel, F. Krzakala, E. W. Tramel, L. Zdeborovà, 
-"Sparse Estimation with the Swept Approximated Message-Passing Algorithm," *arXiv submitted.*
+["Sparse Estimation with the Swept Approximated Message-Passing Algorithm,"](http://arxiv.org/abs/1406.4311) *arXiv preprint 1406.4311*.
 
 ## Contributors to this Repository
 * **Andre Manoel,** *Original Source Author* `[andremanoel@gmail.com]`
