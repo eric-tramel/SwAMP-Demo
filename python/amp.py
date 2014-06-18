@@ -35,7 +35,7 @@ def run_amp(y, F, x, d, prior_prmts, t_max):
         diff = mean(abs(a - a_old))
 
         # Uncomment this line to learn \Delta iteratively.
-        #d = d * sum((w / v) ** 2) / sum(1. / v)
+        #d = d * sum(((y - w) / (d + v)) ** 2) / sum(1. / (d + v))
 
         mse += [mean((a - x) ** 2)]
     mse = array(mse)

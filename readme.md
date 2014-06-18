@@ -16,12 +16,12 @@ being much slower, achieves the same results.
 The SwAMP repository is [hosted on GitHub.](https://github.com/eric-tramel/SwAMP-Demo). 
 
 ## Key Reference
-A. Manoel, F. Krzakala, E. W. Tramel, L. Zdeborovà, 
+A. Manoel, F. Krzakala, E. W. Tramel, L. Zdeborová, 
 ["Sparse Estimation with the Swept Approximated Message-Passing Algorithm,"](http://arxiv.org/abs/1406.4311) *arXiv preprint 1406.4311*.
 
 ## Contributors to this Repository
-* **Andre Manoel,** *Original Source Author* `[andremanoel@gmail.com]`
-* **Eric W. Tramel,** *Maintainer* `[eric.tramel@gmail.com]`
+* **Andre Manoel,** *original source author* `[andremanoel@gmail.com]`
+* **Eric W. Tramel,** *maintainer* `[eric.tramel@gmail.com]`
 
 ## A few details
 
@@ -39,9 +39,4 @@ A. Manoel, F. Krzakala, E. W. Tramel, L. Zdeborovà,
     * `amp_dense.c`, a version that isn't optimized for sparse matrices; 
     * and `amp_alt.c`, a slight modification of the algorithm that, in spite of reaching the same results, sometimes converges faster.
 
-## Trouble Shooting (Mac)
-- Some distributions of MacTeX include a binary named `mex` which is generally located in your `/usr/texbin` directory. This may cause some issues if this is your first time building with Matlab's MEX compiler. Make sure that your Matlab binary directory is included at the *front* of your environment PATH. For example, when using MATLAB 2013b, the following lines would be added to the user's `.bashrc` or `.bash_profile`, 
-```bash
-    PATH=/Applications/MATLAB_R2013b.app/bin:$PATH
-    export PATH
-```
+

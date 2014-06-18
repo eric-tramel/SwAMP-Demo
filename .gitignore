@@ -1,0 +1,4 @@
+# Compiled files
+*.mex*
+*.pyc
+*.orig

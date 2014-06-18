@@ -18,7 +18,7 @@ def sample_instance(n, m, k, delta, gamma):
     
     return x, F, y
 
-def nzm(gamma):
+def nonzero_mean(gamma):
     # Instance's parameters
     n = 1024
     alpha = 0.72
@@ -55,7 +55,10 @@ def nzm(gamma):
 
     # Plot results
     subplot(2, 1, 1)
-    plot(x, 'ko', ms = 7, mfc = 'none'); plot(a_sw, 'rx', ms = 5); plot(a_amp, 'b+', ms = 5)
+    p1, = plot(x, 'ko', ms = 7, mfc = 'none');
+    p2, = plot(a_sw, 'rx', ms = 5)
+    p3, = plot(a_amp, 'b+', ms = 5)
+    legend([p1, p2, p3], ['signal', 'SwAMP', 'AMP'], numpoints = 1)
     xlim([0, len(x)]); xlabel('i'); ylabel('x')
 
     subplot(2, 2, 3)
@@ -78,12 +81,12 @@ print
 print " Let's run both AMP and SwAMP for i.i.d. Gaussian matrices with zero"
 print "   mean and 1 / N variance."
 print
-nzm(0)
+nonzero_mean(0)
 print
 print " As expected, both work and reach the same MSE. We'll now try setting"
 print "   the projector mean to 20 / N."
 raw_input(' (Press any key.)')
 print
-nzm(20)
+nonzero_mean(20)
 print
 print " In this case, AMP diverges, while SwAMP remains converging to a good MSE."
