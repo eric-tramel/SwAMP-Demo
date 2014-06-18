@@ -16,7 +16,7 @@ being much slower, achieves the same results.
 The SwAMP repository is [hosted on GitHub.](https://github.com/eric-tramel/SwAMP-Demo). 
 
 ## Key Reference
-A. Manoel, F. Krzakala, E. W. Tramel, L. Zdeborová, 
+[A. Manoel](http://fge.if.usp.br/~amanoel), [F. Krzakala](http://krzakala.org), [E. W. Tramel](http://eric-tramel.github.io), [L. Zdeborová](http://artax.karlin.mff.cuni.cz/~zdebl9am/), 
 ["Sparse Estimation with the Swept Approximated Message-Passing Algorithm,"](http://arxiv.org/abs/1406.4311) *arXiv preprint 1406.4311*.
 
 ## Contributors to this Repository
