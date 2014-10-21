@@ -24,7 +24,7 @@ function bit(gamma)
     outfile = tempname;
 
     opts.channelType = 'bit';
-    opts.channelPrmts = [];
+    opts.channelPrmts = [0.0];
     opts.priorDistr = 'gb';
     opts.priorPrmts = [rho, 0.0, 1.0];
     opts.learnPrior = 0;
