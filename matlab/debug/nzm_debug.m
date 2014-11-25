@@ -32,17 +32,17 @@ opts.priorDistr = 'gb';
 opts.priorPrmts = [rho, 0.0, 1.0];
 opts.learnPrior = 0;
 opts.initState = [zeros(n, 1); ones(n, 1)];
-opts.maxIter = 200;
+opts.maxIter = 400;
 opts.prec = 1e-8;
 opts.display = 1;
 opts.signal = x;
 opts.output = outfile;
 
 % Extra Feature options
-opts.mean_removal = 1;
-opts.adaptive_damp = 1;
-opts.calc_vfe = 1;
-opts.no_violations = 1;
+opts.mean_removal = 0;
+opts.adaptive_damp = 0;
+opts.calc_vfe = 0;
+opts.no_violations = 0;
 
 %% Run algorithms
 fprintf(' - Running SwAMP... ')
@@ -51,10 +51,15 @@ a_sw = swamp(y, F, opts);
 elapsed = toc;
 
 out = dlmread(outfile, ';', 1, 0);
+iterations = size(out,1);
 mse_sw = out(:, 2);
 delta_sw = out(:,3);
 rss_sw = out(:,4);
 cnv_sw = out(:,5);
+if opts.calc_vfe
+    vfe_sw = out(:,6);
+end
+
 fprintf('Elapsed time: %.2fs, MSE: %.2e.\n', elapsed, mse_sw(end)); 
 
 %% Plot results
@@ -85,4 +90,7 @@ figure(2); clf;
     box on;
     axis tight;
     legend('Location','NorthEast');
+    if iterations > 100
+        set(gca,'XScale','log');
+    end
 

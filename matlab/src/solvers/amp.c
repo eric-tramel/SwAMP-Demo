@@ -6,7 +6,8 @@ void amp (
         double *delta, int is_array, int learn_delta, 
         void (*prior) (int, double*, double*, double*, double*, double*, double*, int), double *prior_prmts, int learn_prior, 
         int t_max, double eps, double damp, int disp, FILE *output, FILE *history, double *x,
-        double *a, double *c, double *r, double *sig 
+        double *a, double *c, double *r, double *sig,
+        int mean_removal, int calc_vfe, int adaptive_damp, int no_violations 
     ) {
     double *w_r, *v, *g, *a_proj, *c_proj, *delta0;
     double w_proj, v_proj, a_old, c_old, diff, res;

@@ -156,19 +156,22 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) {
                     delta, is_array, learn_delta, 
                     prior, prmts, learn_prior, 
                     t_max, eps, damp, disp, output, history, x,
-                    a, c, r, sig);
+                    a, c, r, sig,
+                    mean_removal,calc_vfe,adaptive_damp,no_violations);
             else
                 amp(n, m, y, F, ir, jc, 
                     delta, is_array, learn_delta, 
                     prior, prmts, learn_prior, 
                     t_max, eps, damp, disp, output, history, x,
-                    a, c, r, sig);
+                    a, c, r, sig,
+                    mean_removal,calc_vfe,adaptive_damp,no_violations);
         else
             amp(n, m, y, F, ir, jc, 
                 delta, is_array, learn_delta, 
                 prior, prmts, learn_prior, 
                 t_max, eps, damp, disp, output, history, x,
-                a, c, r, sig);
+                a, c, r, sig,
+                mean_removal,calc_vfe,adaptive_damp,no_violations);
     } else {
         if (opt_so)
             if (strcmp(mxArrayToString(opt_so), "nmf") == 0)
@@ -178,13 +181,15 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) {
                     delta, is_array, learn_delta, 
                     prior, prmts, learn_prior, 
                     t_max, eps, damp, disp, output, history, x,
-                    a, c, r, sig);
+                    a, c, r, sig,
+                    mean_removal,calc_vfe,adaptive_damp,no_violations);
         else
             amp_dense(n, m, y, F,
                 delta, is_array, learn_delta, 
                 prior, prmts, learn_prior, 
                 t_max, eps, damp, disp, output, history, x,
-                a, c, r, sig);
+                a, c, r, sig,
+                mean_removal,calc_vfe,adaptive_damp,no_violations);
     }
 
     /* Dealloc. structures */
