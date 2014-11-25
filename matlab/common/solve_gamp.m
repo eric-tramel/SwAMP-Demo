@@ -58,11 +58,13 @@ function [g, dg, prmts_new] = channel_gaussian( y, w, v, prmts )
 end
 
 function [g, dg, prmts_new] = channel_pm1( y, w, v, prmts )
-    arg = y .* w ./ sqrt(2 .* v);
-    g = y ./ ( sqrt(.5 * pi .* v) .* erfcx(-arg) );
-    dg = -g .* (w ./ v + g);
+    v_eff = v + prmts(1);
+    arg = y .* w ./ sqrt(2 .* v_eff);
+    g = y ./ ( sqrt(.5 * pi .* v_eff) .* erfcx(-arg) );
+    dg = -g .* (w ./ v_eff + g);
 
-    prmts_new = [];
+    %prmts_new = [delta * sum(g. ^ 2) / sum(-dg)];
+    prmts = prmts;
 end
 
 % PRIORS

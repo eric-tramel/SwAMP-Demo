@@ -48,7 +48,7 @@ function bit(gamma)
 
     fprintf(' - Running GAMP... ')
     tic
-    [mse_amp, a_amp] = solve_gamp(y, F, x, 'pm1', [], 'gb', [rho, 0.0, 1.0], 50, 1e-5);
+    [mse_amp, a_amp] = solve_gamp(y, F, x, 'pm1', [delta], 'gb', [rho, 0.0, 1.0], 50, 1e-5);
     elapsed = toc;
     fprintf('Elapsed time: %.2fs, MSE: %.2f dB.\n', elapsed, 10 * log10(mse_amp(end)));
 
