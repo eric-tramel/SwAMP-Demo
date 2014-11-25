@@ -13,7 +13,13 @@ void amp (
     double w_proj, v_proj, a_old, c_old, diff, res;
     double delta_n, delta_d, delta_mean, gamma;
     double mse;
-    double vfe = 0;
+    double vfe, last_vfe = 0;
+
+    /* Hard coding adaptive damping params for now */
+    double damp_max = 0.999;
+    double damp_min = 0.0001;
+    double damp_modifier_up   = 0.2;
+    double damp_modifier_down = 0.1;
 
     unsigned int i, mu, idx, t;
     int *seq, key;
@@ -96,7 +102,19 @@ void amp (
 
         /* Calculate the post-sweep VFE */
         if (calc_vfe){
+            last_vfe = vfe;
             vfe = awgn_vfe(n,m,y,F,ir,jc,a,c,logz,r,sig,delta,is_array);
+        }
+
+        /* Update Damping */    
+        if(adaptive_damp){
+            if(vfe > last_vfe){
+                /* In this case we have observed the VFE growing */
+                damp = min(damp*(1 + damp_modifier_up),damp_max);
+            }else{
+                /* In this case we have observed the VFE decreasing */
+                damp = max(damp*(1 - damp_modifier_down),damp_min);
+            }
         }
 
         /* Update prior parameters */
