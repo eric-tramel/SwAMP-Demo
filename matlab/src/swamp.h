@@ -8,21 +8,24 @@ void amp (
         double *delta, int is_array, int learn_delta, 
         void (*prior) (int, double*, double*, double*, double*, double*, double*, int), double *prior_prmts, int learn_prior, 
         int t_max, double eps, double damp, int disp, FILE *output, FILE *history, double *x,
-        double *a, double *c, double *r, double *sig 
+        double *a, double *c, double *r, double *sig,
+        int mean_removal, int calc_vfe, int adaptive_damp, int no_violations 
     );
 void amp_alt ( 
         size_t n, size_t m, double *y, double *F, int *ir, int *jc, 
         double *delta, int is_array, int learn_delta, 
         void (*prior) (int, double*, double*, double*, double*, double*, double*, int), double *prior_prmts, int learn_prior, 
         int t_max, double eps, double damp, int disp, FILE *output, FILE *history, double *x,
-        double *a, double *c, double *r, double *sig 
+        double *a, double *c, double *r, double *sig,
+        int mean_removal, int calc_vfe, int adaptive_damp, int no_violations 
     );
 void amp_dense ( 
         size_t n, size_t m, double *y, double *F,
         double *delta, int is_array, int learn_delta, 
         void (*prior) (int, double*, double*, double*, double*, double*, double*, int), double *prior_prmts, int learn_prior, 
         int t_max, double eps, double damp, int disp, FILE *output, FILE *history, double *x, 
-        double *a, double *c, double *r, double *sig 
+        double *a, double *c, double *r, double *sig,
+        int mean_removal, int calc_vfe, int adaptive_damp, int no_violations 
     );
 
 /* PRIORS */

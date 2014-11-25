@@ -8,6 +8,12 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) {
     double *a, *c, *r, *sig;
     int learn_delta, learn_prior;
 
+    /* Extra Feature Flags*/
+    int mean_removal;                   /* Use mean removal via auxiliary variables */
+    int adaptive_damp;                  /* Use VFE to change damping per sweep */
+    int calc_vfe;                       /* Save/Output per sweep VFE calc */
+    int no_violations;                  /* Force VFE to decrease, strictly. */
+
     void (*prior);                      /* Auxiliary variables */
     int *ir, *jc;
     int is_array;
@@ -15,7 +21,8 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) {
     mwIndex *ir_, *jc_;
     mxArray *opt_so, *opt_tm, *opt_ep, *opt_pr, *opt_pp, 
             *opt_lp, *opt_cp, *opt_lc, *opt_in, *opt_da, 
-            *opt_di, *opt_ou, *opt_hi, *opt_si;
+            *opt_di, *opt_ou, *opt_hi, *opt_si, *opt_mr,
+            *opt_ad, *opt_cv, *opt_nv;
 
     size_t m, n, nnz;
     unsigned int mu, i, key;
@@ -46,10 +53,15 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) {
         opt_ou = mxGetField(prhs[2], 0, "output");
         opt_hi = mxGetField(prhs[2], 0, "history");
         opt_si = mxGetField(prhs[2], 0, "signal");
+        opt_mr = mxGetField(prhs[2], 0, "mean_removal");
+        opt_ad = mxGetField(prhs[2], 0, "adaptive_damp");
+        opt_cv = mxGetField(prhs[2], 0, "calc_vfe");
+        opt_nv = mxGetField(prhs[2], 0, "no_violations");
     } else {
-        opt_so = opt_tm = opt_ep = opt_pr = opt_pp = 
+            opt_so = opt_tm = opt_ep = opt_pr = opt_pp = 
             opt_lp = opt_cp = opt_lc = opt_in = opt_da = 
-            opt_di = opt_ou = opt_hi = opt_si = NULL;
+            opt_di = opt_ou = opt_hi = opt_si = opt_mr =
+            opt_ad = opt_cv = opt_nv = NULL;
     }
 
     if (opt_cp) {                       /* Delta */
@@ -93,6 +105,20 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) {
     history = opt_hi ? fopen(mxArrayToString(opt_hi), "w") : NULL;
     x = opt_si ? mxGetPr(mxDuplicateArray(opt_si)) : NULL;
 
+    /* Extra Features */
+    mean_removal = opt_mr ? *mxGetPr(opt_mr) : 0;
+    adaptive_damp = opt_ad ? *mxGetPr(opt_ad) : 0;
+    calc_vfe = opt_cv ? *mxGetPr(opt_cv) : 0;
+    no_violations = opt_nv ? *mxGetPr(opt_nv) : 0;
+    if(disp){
+        printf("\n");
+        printf("[ * Mean Removal  : %d]\n",mean_removal);
+        printf("[ * Adaptive Damp : %d]\n",adaptive_damp);
+        printf("[ * Calc VFE      : %d]\n",calc_vfe);
+        printf("[ * No Violations : %d]\n",no_violations);
+    }
+
+
     /* Set-up output */
     plhs[0] = mxCreateDoubleMatrix(n, 1, mxREAL);
     plhs[1] = mxCreateDoubleMatrix(n, 1, mxREAL);
@@ -130,19 +156,22 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) {
                     delta, is_array, learn_delta, 
                     prior, prmts, learn_prior, 
                     t_max, eps, damp, disp, output, history, x,
-                    a, c, r, sig);
+                    a, c, r, sig,
+                    mean_removal,calc_vfe,adaptive_damp,no_violations);
             else
                 amp(n, m, y, F, ir, jc, 
                     delta, is_array, learn_delta, 
                     prior, prmts, learn_prior, 
                     t_max, eps, damp, disp, output, history, x,
-                    a, c, r, sig);
+                    a, c, r, sig,
+                    mean_removal,calc_vfe,adaptive_damp,no_violations);
         else
             amp(n, m, y, F, ir, jc, 
                 delta, is_array, learn_delta, 
                 prior, prmts, learn_prior, 
                 t_max, eps, damp, disp, output, history, x,
-                a, c, r, sig);
+                a, c, r, sig,
+                mean_removal,calc_vfe,adaptive_damp,no_violations);
     } else {
         if (opt_so)
             if (strcmp(mxArrayToString(opt_so), "nmf") == 0)
@@ -152,13 +181,15 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) {
                     delta, is_array, learn_delta, 
                     prior, prmts, learn_prior, 
                     t_max, eps, damp, disp, output, history, x,
-                    a, c, r, sig);
+                    a, c, r, sig,
+                    mean_removal,calc_vfe,adaptive_damp,no_violations);
         else
             amp_dense(n, m, y, F,
                 delta, is_array, learn_delta, 
                 prior, prmts, learn_prior, 
                 t_max, eps, damp, disp, output, history, x,
-                a, c, r, sig);
+                a, c, r, sig,
+                mean_removal,calc_vfe,adaptive_damp,no_violations);
     }
 
     /* Dealloc. structures */
