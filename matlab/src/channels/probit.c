@@ -1,10 +1,21 @@
 #include "../swgamp.h"
 
-void channel_pm1( size_t m, double *y, double *w, double *v, double *prmts, 
+void channel_probit( size_t m, double *y, double *w, double *v, double *prmts, 
         double *g, double *dg, int learn ) {
-    double v_eff;
+    double delta_n, delta_d, delta, v_eff;
     double arg, z, erfcx;
     unsigned int mu;
+
+    if (learn) {
+        delta_n = delta_d = 0; /* Sums: g^2 and -dg */
+        for (mu = 0; mu < m; mu++) {
+            delta_n += pow(g[mu], 2);
+            delta_d -= dg[mu];
+        }
+        prmts[0] *= (delta_n / delta_d);
+        printf("delta = %g\n", prmts[0]);
+    }
+    delta = prmts[0];
 
     if (m == 1) {
         v_eff = prmts[0] + (*v); 
@@ -23,6 +34,6 @@ void channel_pm1( size_t m, double *y, double *w, double *v, double *prmts,
         *g = (*y) / ( sqrt(.5 * M_PI * v_eff) * erfcx );
         *dg = -(*g) * ((*w) / v_eff + (*g));
     } else {
-        for (mu = 0; mu < m; mu++) channel_pm1(1, &y[mu], &w[mu], &v[mu], prmts, &g[mu], &dg[mu], 0);
+        for (mu = 0; mu < m; mu++) channel_probit(1, &y[mu], &w[mu], &v[mu], prmts, &g[mu], &dg[mu], 0);
     }
 }

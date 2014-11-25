@@ -23,7 +23,7 @@ function bit(gamma)
     % estimate!
     outfile = tempname;
 
-    opts.channelType = 'bit';
+    opts.channelType = 'probit';
     opts.channelPrmts = [0.0];
     opts.priorDistr = 'gb';
     opts.priorPrmts = [rho, 0.0, 1.0];

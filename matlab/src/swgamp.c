@@ -51,8 +51,8 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) {
     }
 
     if (opt_ch) {                       /* Channel type */
-        if (strcmp(mxArrayToString(opt_ch), "bit") == 0) 
-            channel = channel_pm1;
+        if (strcmp(mxArrayToString(opt_ch), "probit") == 0) 
+            channel = channel_probit;
         else
             channel = channel_gaussian;
     }

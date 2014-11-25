@@ -20,7 +20,7 @@ void prior_binary( int n, double *r_vec, double *sig_vec, double *prmts,
 /* CHANNELS */
 void channel_gaussian( size_t m, double *y, double *w, double *v, double *prmts, 
         double *g, double *dg, int learn );
-void channel_pm1( size_t m, double *y, double *w, double *v, double *prmts, 
+void channel_probit( size_t m, double *y, double *w, double *v, double *prmts, 
         double *g, double *dg, int learn );
 
 /* COMMON */
