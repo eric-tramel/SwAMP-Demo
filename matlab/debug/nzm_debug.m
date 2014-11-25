@@ -18,6 +18,7 @@ x(supp) = randn(k, 1);
 F = gamma / n + randn(m, n) / sqrt(n);
 w = sqrt(delta) * randn(m, 1);
 y = F * x + w;
+F = sparse(F);
 
 %% Setup algorithm
 % Obs.: the 'signal' option is only being passed so that the MSE may be
@@ -41,7 +42,7 @@ opts.output = outfile;
 % Extra Feature options
 opts.mean_removal = 0;
 opts.adaptive_damp = 0;
-opts.calc_vfe = 0;
+opts.calc_vfe = 1;
 opts.no_violations = 0;
 
 %% Run algorithms
@@ -93,4 +94,16 @@ figure(2); clf;
     if iterations > 100
         set(gca,'XScale','log');
     end
+
+if opts.calc_vfe
+    figure(3); clf;
+        plot(vfe_sw,'-b','LineWidth',2);
+    xlabel('Iteration');
+    ylabel('VFE');
+    box on; grid on;
+    axis tight;
+    if iterations > 100
+        set(gca,'XScale','log');
+    end
+end
 

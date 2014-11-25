@@ -39,6 +39,12 @@ void learn_prior_gb( size_t n, double *r, double *sig,
 
 /* COMMON */
 void sort_rand( int n, int *seq );
+double awgn_vfe (size_t n, size_t m, 
+            double *y,
+            double *F, int *ir, int *jc,
+            double *a, double *c, double *log_z,
+            double *r, double *sig, 
+            double *delta, int is_array);
 
 static inline double max( double a, double b ) { return a > b ? a : b; }
 static inline double min( double a, double b ) { return a < b ? a : b; }

@@ -110,6 +110,8 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) {
     adaptive_damp = opt_ad ? *mxGetPr(opt_ad) : 0;
     calc_vfe = opt_cv ? *mxGetPr(opt_cv) : 0;
     no_violations = opt_nv ? *mxGetPr(opt_nv) : 0;
+    if(adaptive_damp && ~calc_vfe) calc_vfe = 1;        /* Force calc_vfe flag if we need it. */
+
     if(disp){
         printf("\n");
         printf("[ * Mean Removal  : %d]\n",mean_removal);

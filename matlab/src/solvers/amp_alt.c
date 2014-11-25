@@ -9,15 +9,20 @@ void amp_alt (
         double *a, double *c, double *r, double *sig,
         int mean_removal, int calc_vfe, int adaptive_damp, int no_violations 
     ) {
-    double *w_r, *v, *a_proj, *c_proj, *delta0;
+    double *w_r, *v, *a_proj, *c_proj, *delta0, *logz;
     double w_proj, v_proj, a_old, c_old, diff, res;
     double delta_n, delta_d, delta_mean, gamma;
-    double mse, fren;
+    double mse;
+    double vfe = 0;
 
     unsigned int i, mu, idx, t;
     int *seq, key;
 
     /* Alloc. structures */
+    if(calc_vfe){
+        // Only allocating the space for logz if we are actually going to use it.
+        logz = malloc(sizeof(double) * n);
+    }
     w_r = malloc(sizeof(double) * m);
     v = malloc(sizeof(double) * m);
     a_proj = malloc(sizeof(double) * m);
@@ -71,7 +76,11 @@ void amp_alt (
             r[i] = damp * r[i] + (1 - damp) * (a[i] + sig[i] * w_proj);
 
             /* ... then, a and c ... */
-            prior(1, &r[i], &sig[i], prior_prmts, &a[i], &c[i], NULL, 0);
+            if(calc_vfe){
+                prior(1, &r[i], &sig[i], prior_prmts, &a[i], &c[i], &logz[i], 0);
+            }else{
+                prior(1, &r[i], &sig[i], prior_prmts, &a[i], &c[i], NULL, 0);
+            }
 
             /* ... and finally, w_r and v. */
             for (idx = jc[i]; idx < jc[i + 1]; idx++) {
@@ -80,6 +89,11 @@ void amp_alt (
             }
 
             diff += fabs(a[i] - a_old);
+        }
+
+        /* Calculate the post-sweep VFE */
+        if (calc_vfe){
+            vfe = awgn_vfe(n,m,y,F,ir,jc,a,c,logz,r,sig,delta,is_array);
         }
 
         /* Update prior parameters */
@@ -129,9 +143,9 @@ void amp_alt (
         }
 
         if (disp) printf("t: %3d; mse: %.4e, est noise: %.4e, rss: %.4e, diff: %.4e\n", 
-                t, mse, delta_mean, res, diff / n, fren);
+                t, mse, delta_mean, res, diff / n);
         if (output) fprintf(output, "%d;%g;%g;%g;%g;%g\n", 
-                t, mse, delta_mean, res, diff / n, fren);
+                t, mse, delta_mean, res, diff / n,vfe);
         mexEvalString("drawnow");
 
         if (history) {
@@ -150,4 +164,5 @@ void amp_alt (
     free(a_proj);
     free(v);
     free(w_r);
+    if(calc_vfe) free(logz);
 }
