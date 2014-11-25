@@ -1,5 +1,5 @@
 %% Parameters
-gamma = 0;
+gamma = 80;
 n = 2048;
 rho = 0.44;
 alpha = 0.72;
@@ -27,8 +27,8 @@ F = sparse(F);
 outfile = tempname;
 
 opts.solver = 'amp';
-opts.delta = 1.0;
-opts.learnDelta = 1;
+opts.delta = delta;
+opts.learnDelta = 0;
 opts.priorDistr = 'gb';
 opts.priorPrmts = [rho, 0.0, 1.0];
 opts.learnPrior = 0;
@@ -38,10 +38,11 @@ opts.prec = 1e-8;
 opts.display = 1;
 opts.signal = x;
 opts.output = outfile;
+opts.damp = 0.1;
 
 % Extra Feature options
 opts.mean_removal = 0;
-opts.adaptive_damp = 0;
+opts.adaptive_damp = 1;
 opts.calc_vfe = 1;
 opts.no_violations = 0;
 
