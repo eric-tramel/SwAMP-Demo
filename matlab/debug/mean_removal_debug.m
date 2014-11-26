@@ -1,5 +1,5 @@
 %% Parameters
-gamma = 50;
+gamma = 20;
 n = 512;
 % rho = 0.44;
 rho = 0.3;
@@ -89,6 +89,8 @@ Fb_s = [Ft,             b12_s*g,     b13_s*om;
 	    b21_s*on', -b21_s*b12_s,            0;
 	    b31_s*ct,             0, -b31_s*b13_s];
 
+Fb_s = sparse(Fb_s);
+
 % Do we do okay matching ?
 figure(1); clf;
 	plot(sum(Fb_s.^2,2)/n);
@@ -106,7 +108,7 @@ opts.priorDistr = 'gb';
 opts.priorPrmts = [rho, 0.0, 1.0];
 opts.learnPrior = 0;
 opts.initState = [zeros(n+2, 1); ones(n+2, 1)];
-opts.maxIter = 500;
+opts.maxIter = 4000;
 opts.prec = 1e-8;
 opts.display = 1;
 opts.signal = x;
@@ -126,6 +128,8 @@ tic
 a_with_aux = swamp(yb, Fb_s, opts);
 a_sw = a_with_aux(1:(end-2));
 elapsed = toc;
+
+mean((a_sw - x).^2)
 
 out = dlmread(outfile, ';', 1, 0);
 iterations = size(out,1);

@@ -19,10 +19,10 @@ void amp (
     double last_vfe = 0;
     double local_vfe,last_local_vfe;
     double mean_site_damp = 0;
-    int AUXA_N = n-1;
-    int AUXB_N = n;
-    int AUXA_M = m-1;
-    int AUXB_M = m;
+    int AUXA_N = n-2;
+    int AUXB_N = n-1;
+    int AUXA_M = m-2;
+    int AUXB_M = m-1;
 
     /* Hard coding adaptive damping params for now */
     double damp_max = 0.999;
@@ -84,7 +84,7 @@ void amp (
             if(mean_removal && (mu == AUXA_M || mu == AUXB_M)){
                 // Use a reall small noise to simulate the delta/impulse channel for the 
                 // auxiliary coefficients
-                v[mu] = 1e-20 + c_proj[mu];
+                v[mu] = c_proj[mu];
             }else{
                 v[mu] = (is_array ? delta[mu] : *delta) + c_proj[mu];
             }
