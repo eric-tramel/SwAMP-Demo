@@ -18,6 +18,10 @@ void amp (
     double vfe, last_vfe = 0;
     double local_vfe,last_local_vfe;
     double mean_site_damp = 0;
+    int AUXA_N = n-1;
+    int AUXB_N = n;
+    int AUXA_M = m-1;
+    int AUXB_M = m;
 
     /* Hard coding adaptive damping params for now */
     double damp_max = 0.999;
@@ -53,6 +57,7 @@ void amp (
     for (mu = 0; mu < m; mu++) w_r[mu] = 0.;
     for (mu = 0; mu < m; mu++) v[mu] = 1.;
 
+
     /* Iterate AMP */
     if (output)
         fprintf(output, "'#t';'mse';'delta';'RSS';'diff';'F'\n");
@@ -60,6 +65,7 @@ void amp (
         /* Generate random permutation */
         for (key = 0; key < n; key++) seq[key] = key;
         sort_rand(n, seq);
+
 
         /* Update a_proj and c_proj */
         for (mu = 0; mu < m; mu++) a_proj[mu] = c_proj[mu] = 0;
@@ -73,7 +79,14 @@ void amp (
         for (mu = 0; mu < m; mu++) {
             g[mu] = w_r[mu] / v[mu];
             w_r[mu] = (y[mu] - a_proj[mu]) + c_proj[mu] * g[mu];
-            v[mu] = (is_array ? delta[mu] : *delta) + c_proj[mu];
+            
+            if(mean_removal && (mu == AUXA_M || mu == AUXB_M)){
+                // Use a reall small noise to simulate the delta/impulse channel for the 
+                // auxiliary coefficients
+                v[mu] = 1e-20 + c_proj[mu];
+            }else{
+                v[mu] = (is_array ? delta[mu] : *delta) + c_proj[mu];
+            }
         }
 
         /* Sweep over all n variables, in random order */
@@ -104,28 +117,32 @@ void amp (
                 prior(1, &r[i], &sig[i], prior_prmts, &a[i], &c[i], NULL, 0);
             }
 
-            /* Check for a local violation */
-            if(site_rejection){
-                /* What are the local characteristics of the VFE when chaning this one variable ?*/ 
-                local_vfe = awgn_vfe(1,m,y,F,ir,jc,&a[i],&c[i],&logz[i],&r[i],&sig[i],delta,is_array,i);
-                last_local_vfe = awgn_vfe(1,m,y,F,ir,jc,&a_old,&c_old,&logz_old,&r_old,&s_old,delta,is_array,i);
+            // If we are in mean-removal mode and this is an auxiliary variable, set
+            // {a,c} to be equal to {r,sigma}
+            if(mean_removal && (i == AUXA_N || i == AUXB_N)){
+                a[i] = r[i];
+                c[i] = sig[i];
+            }
 
-                if(local_vfe > last_local_vfe){
-                    /* Apply a strong damping to site */
-                    // per_site_damp[i] = min(per_site_damp[i]*(1 + damp_modifier_up),damp_max);
-                    // a[i] = per_site_damp[i]*a_old + (1-per_site_damp[i])*a[i];
-                    // c[i] = per_site_damp[i]*c_old + (1-per_site_damp[i])*c[i];
-                    a[i] = damp_site_violation*a_old + (1-damp_site_violation)*a[i];
-                    c[i] = damp_site_violation*c_old + (1-damp_site_violation)*c[i];
+            // Don't check for site rejections if we are on an auxiliary variable in mean_removal mode
+            if((mean_removal && (i!=AUXA_N) && (i!=AUXB_N)) || !mean_removal){
+                /* Check for a local violation */
+                if(site_rejection){
+                    /* What are the local characteristics of the VFE when chaning this one variable ?*/ 
+                    local_vfe = awgn_vfe(1,m,y,F,ir,jc,&a[i],&c[i],&logz[i],&r[i],&sig[i],delta,is_array,i);
+                    last_local_vfe = awgn_vfe(1,m,y,F,ir,jc,&a_old,&c_old,&logz_old,&r_old,&s_old,delta,is_array,i);
 
-                    site_violation_count += 1;
-                    site_violation = 1;                    
-                }else{
-                    // per_site_damp[i] = max(per_site_damp[i]*(1 - damp_modifier_up),damp_min);
-                    site_violation = 0;
+                    if(local_vfe > last_local_vfe){
+                        /* Apply a strong damping to site */
+                        a[i] = damp_site_violation*a_old + (1-damp_site_violation)*a[i];
+                        c[i] = damp_site_violation*c_old + (1-damp_site_violation)*c[i];
+
+                        site_violation_count += 1;
+                        site_violation = 1;                    
+                    }else{
+                        site_violation = 0;
+                    }
                 }
-
-                // mean_site_damp += per_site_damp[i];
             }
             
             if(site_rejection && site_violation && no_violations){
@@ -196,9 +213,15 @@ void amp (
         
         mse = 0;
         if (x) {
-            for (i = 0; i < n; i++)
-                mse += pow(a[i] - x[i], 2);
-            mse /= n;
+            if(!mean_removal){
+                for (i = 0; i < n; i++)
+                    mse += pow(a[i] - x[i], 2);
+                mse /= n;
+            }else{
+                for (i = 0; i < (n-2); i++)
+                    mse += pow(a[i] - x[i], 2);
+                mse /= (n-2);
+            }
         }
 
         if (is_array) {

@@ -43,7 +43,7 @@ opts.damp = 0.0;
 
 % Extra Feature options
 opts.mean_removal = 0;
-opts.adaptive_damp = 1;
+opts.adaptive_damp = 0;
 opts.calc_vfe = 1;
 opts.no_violations = 0;
 opts.site_rejection = 1;
