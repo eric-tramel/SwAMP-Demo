@@ -1,5 +1,5 @@
 %% Parameters
-gamma = 50;
+gamma = 1000;
 n = 512;
 % rho = 0.44;
 rho = 0.3;
@@ -55,7 +55,7 @@ b12 = 1;
 b31 = 1;
 b13 = sqrt(F_ms_col);
 g  = (1/n)*F*on;		% Get \gamma
-mu = (1/(m*n))*om'*g;	% Get Mean
+mu = (1/m)*om'*g;	% Get Mean
 ct = (1/m)*om'*(F - mu*(om*on'));
 Ft = F - g*on' - om*ct;
 
@@ -88,6 +88,7 @@ b31_s = sqrt(fro/(m*(on'*col2 + b13_s^2)))
 Fb_s = [Ft,             b12_s*g,     b13_s*om;
 	    b21_s*on', -b21_s*b12_s,            0;
 	    b31_s*ct,             0, -b31_s*b13_s];
+Fb_s = sparse(Fb_s);
 
 % Do we do okay matching ?
 figure(1); clf;
