@@ -18,8 +18,8 @@ void amp (
     /* Hard coding adaptive damping params for now */
     double damp_max = 0.999;
     double damp_min = 0.0001;
-    double damp_modifier_up   = 0.2;
-    double damp_modifier_down = 0.1;
+    double damp_modifier_up   = 0.3;
+    double damp_modifier_down = 0.08;
 
     unsigned int i, mu, idx, t;
     int *seq, key;
@@ -165,8 +165,8 @@ void amp (
 
         if (disp) printf("t: %3d; mse: %.4e, est noise: %.4e, rss: %.4e, diff: %.4e\n", 
                 t, mse, delta_mean, res, diff / n);
-        if (output) fprintf(output, "%d;%g;%g;%g;%g;%g\n", 
-                t, mse, delta_mean, res, diff / n,vfe);
+        if (output) fprintf(output, "%d;%g;%g;%g;%g;%g;%g\n", 
+                t, mse, delta_mean, res, diff / n,vfe,damp);
         mexEvalString("drawnow");
 
         if (history) {

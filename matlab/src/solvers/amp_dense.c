@@ -168,8 +168,8 @@ void amp_dense (
 
         if (disp) printf("t: %3d; mse: %.4e, est noise: %.4e, rss: %.4e, diff: %.4e\n", 
                 t, mse, delta_mean, res, diff / n);
-        if (output) fprintf(output, "%d;%g;%g;%g;%g;%g\n", 
-                t, mse, delta_mean, res, diff / n,vfe);
+        if (output) fprintf(output, "%d;%g;%g;%g;%g;%g;%g\n", 
+                t, mse, delta_mean, res, diff / n,vfe,damp);
         mexEvalString("drawnow");
 
         if (history) {

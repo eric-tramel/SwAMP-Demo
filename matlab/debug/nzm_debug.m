@@ -1,5 +1,5 @@
 %% Parameters
-gamma = 80;
+gamma = 100;
 n = 2048;
 rho = 0.44;
 alpha = 0.72;
@@ -33,12 +33,12 @@ opts.priorDistr = 'gb';
 opts.priorPrmts = [rho, 0.0, 1.0];
 opts.learnPrior = 0;
 opts.initState = [zeros(n, 1); ones(n, 1)];
-opts.maxIter = 400;
+opts.maxIter = 1000;
 opts.prec = 1e-8;
 opts.display = 1;
 opts.signal = x;
 opts.output = outfile;
-opts.damp = 0.1;
+opts.damp = 0.5;
 
 % Extra Feature options
 opts.mean_removal = 0;
@@ -61,6 +61,9 @@ cnv_sw = out(:,5);
 if opts.calc_vfe
     vfe_sw = out(:,6);
 end
+if opts.adaptive_damp
+    damp_sw = out(:,7);
+end
 
 fprintf('Elapsed time: %.2fs, MSE: %.2e.\n', elapsed, mse_sw(end)); 
 
@@ -81,10 +84,10 @@ figure(1); clf;
 
 figure(2); clf;
     hold on;
+        plot(cnv_sw,'-g',   'LineWidth',1,'DisplayName','Convergence');
         plot(mse_sw,'-b',   'LineWidth',1,'DisplayName','MSE');
         plot(delta_sw,'-m^','LineWidth',1,'DisplayName','\Delta Estimate');
-        plot(rss_sw,'-r',   'LineWidth',1,'DisplayName','RSS (residual norm)');
-        plot(cnv_sw,'-g',   'LineWidth',1,'DisplayName','Convergence');
+        plot(rss_sw,'-r',   'LineWidth',1,'DisplayName','RSS (residual norm)');        
         plot(delta*ones(size(delta_sw)),':k','LineWidth',1,'DisplayName','True \Delta');
     hold off;
     xlabel('Iteration');
@@ -92,18 +95,26 @@ figure(2); clf;
     box on;
     axis tight;
     legend('Location','NorthEast');
-    if iterations > 100
+    if iterations > 1000
         set(gca,'XScale','log');
     end
 
 if opts.calc_vfe
+    min_vfe = min(vfe_sw);
+    shifted_vfe_sw = (vfe_sw - min_vfe) + 1;
+
     figure(3); clf;
-        plot(vfe_sw,'-b','LineWidth',2);
+        if opts.adaptive_damp
+            plotyy(1:iterations,shifted_vfe_sw,1:iterations,damp_sw);
+        else
+            plot(shifted_vfe_sw,'-b','LineWidth',2);
+        end
     xlabel('Iteration');
-    ylabel('VFE');
+    ylabel('Shifted VFE');
     box on; grid on;
     axis tight;
-    if iterations > 100
+    set(gca,'YScale','log');
+    if iterations > 1000
         set(gca,'XScale','log');
     end
 end
