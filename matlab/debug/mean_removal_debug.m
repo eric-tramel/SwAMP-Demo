@@ -1,5 +1,5 @@
 %% Parameters
-gamma = 20;
+gamma = 1000;
 n = 512;
 % rho = 0.44;
 rho = 0.4;
@@ -101,14 +101,14 @@ Fb_s = sparse(Fb_s);
 
 outfile = tempname;
 opts.solver = 'amp';
-opts.delta = 1.0;
-opts.learnDelta = 1;
+opts.delta = delta;
+opts.learnDelta = 0;
 opts.priorDistr = 'gb';
 opts.priorPrmts = [rho, 0.0, 1.0];
 opts.learnPrior = 0;
 opts.initState = [zeros(n+2, 1); ones(n+2, 1)];
 opts.maxIter = 1000;
-opts.prec = delta;
+opts.prec = 1e-5;
 opts.display = 1;
 opts.signal = x;
 opts.output = outfile;
