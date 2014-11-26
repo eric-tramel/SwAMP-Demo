@@ -7,19 +7,24 @@ void amp (
         void (*prior) (int, double*, double*, double*, double*, double*, double*, int), double *prior_prmts, int learn_prior, 
         int t_max, double eps, double damp, int disp, FILE *output, FILE *history, double *x,
         double *a, double *c, double *r, double *sig,
-        int mean_removal, int calc_vfe, int adaptive_damp, int no_violations 
+        int mean_removal, int calc_vfe, int adaptive_damp, int no_violations, int site_rejection  
     ) {
-    double *w_r, *v, *g, *a_proj, *c_proj, *delta0, *logz;
-    double w_proj, v_proj, a_old, c_old, diff, res;
+    double *w_r, *v, *g, *a_proj, *c_proj, *delta0, *logz, *per_site_damp;
+    double w_proj, v_proj, a_old, c_old, r_old, s_old, logz_old, diff, res;
+    double site_violation_count = 0;
+    double site_violation;
     double delta_n, delta_d, delta_mean, gamma;
     double mse;
     double vfe, last_vfe = 0;
+    double local_vfe,last_local_vfe;
+    double mean_site_damp = 0;
 
     /* Hard coding adaptive damping params for now */
     double damp_max = 0.999;
     double damp_min = 0.0001;
     double damp_modifier_up   = 0.3;
     double damp_modifier_down = 0.08;
+    double damp_site_violation = 0.9;
 
     unsigned int i, mu, idx, t;
     int *seq, key;
@@ -29,6 +34,10 @@ void amp (
         // Only allocating the space for logz if we are actually going to use it.
         logz = malloc(sizeof(double) * n);
     }
+    // if(site_rejection){
+    //     per_site_damp = malloc(sizeof(double)*n);
+    //     for(i = 0; i<n; i++) per_site_damp[i] = 0.5;
+    // }
     w_r = malloc(sizeof(double) * m);
     v = malloc(sizeof(double) * m);
     g = malloc(sizeof(double) * m);
@@ -69,6 +78,8 @@ void amp (
 
         /* Sweep over all n variables, in random order */
         diff = res = 0.;
+        site_violation_count = 0;
+        mean_site_damp = 0.;
         for (key = 0; key < n; key++) {
             i = seq[key];
             a_old = a[i], c_old = c[i];
@@ -80,30 +91,65 @@ void amp (
                 v_proj += (F[idx] * F[idx]) / v[ ir[idx] ];
             }
 
+            s_old = sig[i];
+            r_old = r[i];
             sig[i] = damp * sig[i] + (1 - damp) * (1. / v_proj);
             r[i] = damp * r[i] + (1 - damp) * (a[i] + sig[i] * w_proj);
 
             /* ... then, a and c ... */
             if(calc_vfe){
-                prior(1, &r[i], &sig[i], prior_prmts, &a[i], &c[i], &logz[i], 0);
+                logz_old = logz[i];
+                prior(1, &r[i], &sig[i], prior_prmts, &a[i], &c[i], &logz[i], 0);                
             }else{
                 prior(1, &r[i], &sig[i], prior_prmts, &a[i], &c[i], NULL, 0);
             }
 
-            /* ... and finally, w_r and v. */
-            for (idx = jc[i]; idx < jc[i + 1]; idx++) {
-                w_r[ ir[idx] ] += F[idx] * (a_old - a[i])
-                    + (F[idx] * F[idx]) * (c[i] - c_old) * g[ ir[idx] ];
-                v[ ir[idx] ] += (F[idx] * F[idx]) * (c[i] - c_old);
-            }
+            /* Check for a local violation */
+            if(site_rejection){
+                /* What are the local characteristics of the VFE when chaning this one variable ?*/ 
+                local_vfe = awgn_vfe(1,m,y,F,ir,jc,&a[i],&c[i],&logz[i],&r[i],&sig[i],delta,is_array,i);
+                last_local_vfe = awgn_vfe(1,m,y,F,ir,jc,&a_old,&c_old,&logz_old,&r_old,&s_old,delta,is_array,i);
 
-            diff += fabs(a[i] - a_old);
+                if(local_vfe > last_local_vfe){
+                    /* Apply a strong damping to site */
+                    // per_site_damp[i] = min(per_site_damp[i]*(1 + damp_modifier_up),damp_max);
+                    // a[i] = per_site_damp[i]*a_old + (1-per_site_damp[i])*a[i];
+                    // c[i] = per_site_damp[i]*c_old + (1-per_site_damp[i])*c[i];
+                    a[i] = damp_site_violation*a_old + (1-damp_site_violation)*a[i];
+                    c[i] = damp_site_violation*c_old + (1-damp_site_violation)*c[i];
+
+                    site_violation_count += 1;
+                    site_violation = 1;                    
+                }else{
+                    // per_site_damp[i] = max(per_site_damp[i]*(1 - damp_modifier_up),damp_min);
+                    site_violation = 0;
+                }
+
+                // mean_site_damp += per_site_damp[i];
+            }
+            
+            if(site_rejection && site_violation && no_violations){
+                sig[i] = s_old;
+                r[i] = r_old;
+                a[i] = a_old;
+                c[i] = c_old;
+                logz[i] = logz_old;
+            }else{
+                /* ... and finally, w_r and v. */
+                for (idx = jc[i]; idx < jc[i + 1]; idx++) {
+                    w_r[ ir[idx] ] += F[idx] * (a_old - a[i])
+                        + (F[idx] * F[idx]) * (c[i] - c_old) * g[ ir[idx] ];
+                    v[ ir[idx] ] += (F[idx] * F[idx]) * (c[i] - c_old);
+                }
+
+                diff += fabs(a[i] - a_old);
+            }
         }
 
         /* Calculate the post-sweep VFE */
         if (calc_vfe){
             last_vfe = vfe;
-            vfe = awgn_vfe(n,m,y,F,ir,jc,a,c,logz,r,sig,delta,is_array);
+            vfe = awgn_vfe(n,m,y,F,ir,jc,a,c,logz,r,sig,delta,is_array,0);
         }
 
         /* Update Damping */    
@@ -163,10 +209,16 @@ void amp (
             delta_mean = *delta;
         }
 
-        if (disp) printf("t: %3d; mse: %.4e, est noise: %.4e, rss: %.4e, diff: %.4e\n", 
+
+        if(disp && adaptive_damp){
+            printf("t: %3d; mse: %.4e, est noise: %.4e, rss: %.4e, diff: %.4e, damp: %.4e\n", 
+                t, mse, delta_mean, res, diff / n,damp);
+        }else{
+            printf("t: %3d; mse: %.4e, est noise: %.4e, rss: %.4e, diff: %.4e\n", 
                 t, mse, delta_mean, res, diff / n);
-        if (output) fprintf(output, "%d;%g;%g;%g;%g;%g;%g\n", 
-                t, mse, delta_mean, res, diff / n,vfe,damp);
+        }
+        if (output) fprintf(output, "%d;%g;%g;%g;%g;%g;%g;%g\n", 
+                t, mse, delta_mean, res, diff / n,vfe,damp,site_violation_count);
         mexEvalString("drawnow");
 
         if (history) {
@@ -187,4 +239,5 @@ void amp (
     free(v);
     free(w_r);
     if(calc_vfe) free(logz);
+    // if(site_rejection) free(per_site_damp);
 }

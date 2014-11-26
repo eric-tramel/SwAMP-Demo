@@ -7,7 +7,7 @@ void amp_dense (
         void (*prior) (int, double*, double*, double*, double*, double*, double*, int), double *prior_prmts, int learn_prior, 
         int t_max, double eps, double damp, int disp, FILE *output, FILE *history, double *x,
         double *a, double *c, double *r, double *sig,
-        int mean_removal, int calc_vfe, int adaptive_damp, int no_violations 
+        int mean_removal, int calc_vfe, int adaptive_damp, int no_violations, int site_rejection  
     ) {
     double *w_r, *v, *g, *a_proj, *c_proj, *delta0, *logz;
     double w_proj, v_proj, a_old, c_old, diff, res;
@@ -106,7 +106,7 @@ void amp_dense (
         /* Calculate the post-sweep VFE */
         if (calc_vfe){
             last_vfe = vfe;
-            vfe = awgn_vfe(n,m,y,F,NULL,NULL,a,c,logz,r,sig,delta,is_array);
+            vfe = awgn_vfe(n,m,y,F,NULL,NULL,a,c,logz,r,sig,delta,is_array,0);
         }
 
         /* Update Damping */    

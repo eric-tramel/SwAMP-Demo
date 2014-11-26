@@ -13,6 +13,7 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) {
     int adaptive_damp;                  /* Use VFE to change damping per sweep */
     int calc_vfe;                       /* Save/Output per sweep VFE calc */
     int no_violations;                  /* Force VFE to decrease, strictly. */
+    int site_rejection;                 /* Check for VFE violations at the site level */
 
     void (*prior);                      /* Auxiliary variables */
     int *ir, *jc;
@@ -22,7 +23,7 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) {
     mxArray *opt_so, *opt_tm, *opt_ep, *opt_pr, *opt_pp, 
             *opt_lp, *opt_cp, *opt_lc, *opt_in, *opt_da, 
             *opt_di, *opt_ou, *opt_hi, *opt_si, *opt_mr,
-            *opt_ad, *opt_cv, *opt_nv;
+            *opt_ad, *opt_cv, *opt_nv, *opt_sr;
 
     size_t m, n, nnz;
     unsigned int mu, i, key;
@@ -57,11 +58,12 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) {
         opt_ad = mxGetField(prhs[2], 0, "adaptive_damp");
         opt_cv = mxGetField(prhs[2], 0, "calc_vfe");
         opt_nv = mxGetField(prhs[2], 0, "no_violations");
+        opt_sr = mxGetField(prhs[2], 0, "site_rejection");
     } else {
             opt_so = opt_tm = opt_ep = opt_pr = opt_pp = 
             opt_lp = opt_cp = opt_lc = opt_in = opt_da = 
             opt_di = opt_ou = opt_hi = opt_si = opt_mr =
-            opt_ad = opt_cv = opt_nv = NULL;
+            opt_ad = opt_cv = opt_nv = opt_sr = NULL;
     }
 
     if (opt_cp) {                       /* Delta */
@@ -110,14 +112,18 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) {
     adaptive_damp = opt_ad ? *mxGetPr(opt_ad) : 0;
     calc_vfe = opt_cv ? *mxGetPr(opt_cv) : 0;
     no_violations = opt_nv ? *mxGetPr(opt_nv) : 0;
-    if(adaptive_damp && ~calc_vfe) calc_vfe = 1;        /* Force calc_vfe flag if we need it. */
+    site_rejection = opt_sr ? *mxGetPr(opt_sr) : 0;
+        /* Force calc_vfe flag if we need it. */
+        if(adaptive_damp && ~calc_vfe) calc_vfe = 1;
+        if(site_rejection && ~calc_vfe) calc_vfe = 1;        
 
     if(disp){
         printf("\n");
-        printf("[ * Mean Removal  : %d]\n",mean_removal);
-        printf("[ * Adaptive Damp : %d]\n",adaptive_damp);
-        printf("[ * Calc VFE      : %d]\n",calc_vfe);
-        printf("[ * No Violations : %d]\n",no_violations);
+        printf("[ * Mean Removal   : %d]\n",mean_removal);
+        printf("[ * Adaptive Damp  : %d]\n",adaptive_damp);
+        printf("[ * Calc VFE       : %d]\n",calc_vfe);
+        printf("[ * No Violations  : %d]\n",no_violations);
+        printf("[ * Site Rejection : %d]\n",site_rejection);
     }
 
 
@@ -159,21 +165,21 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) {
                     prior, prmts, learn_prior, 
                     t_max, eps, damp, disp, output, history, x,
                     a, c, r, sig,
-                    mean_removal,calc_vfe,adaptive_damp,no_violations);
+                    mean_removal,calc_vfe,adaptive_damp,no_violations,site_rejection);
             else
                 amp(n, m, y, F, ir, jc, 
                     delta, is_array, learn_delta, 
                     prior, prmts, learn_prior, 
                     t_max, eps, damp, disp, output, history, x,
                     a, c, r, sig,
-                    mean_removal,calc_vfe,adaptive_damp,no_violations);
+                    mean_removal,calc_vfe,adaptive_damp,no_violations,site_rejection);
         else
             amp(n, m, y, F, ir, jc, 
                 delta, is_array, learn_delta, 
                 prior, prmts, learn_prior, 
                 t_max, eps, damp, disp, output, history, x,
                 a, c, r, sig,
-                mean_removal,calc_vfe,adaptive_damp,no_violations);
+                mean_removal,calc_vfe,adaptive_damp,no_violations,site_rejection);
     } else {
         if (opt_so)
             if (strcmp(mxArrayToString(opt_so), "nmf") == 0)
@@ -184,14 +190,14 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) {
                     prior, prmts, learn_prior, 
                     t_max, eps, damp, disp, output, history, x,
                     a, c, r, sig,
-                    mean_removal,calc_vfe,adaptive_damp,no_violations);
+                    mean_removal,calc_vfe,adaptive_damp,no_violations,site_rejection);
         else
             amp_dense(n, m, y, F,
                 delta, is_array, learn_delta, 
                 prior, prmts, learn_prior, 
                 t_max, eps, damp, disp, output, history, x,
                 a, c, r, sig,
-                mean_removal,calc_vfe,adaptive_damp,no_violations);
+                mean_removal,calc_vfe,adaptive_damp,no_violations,site_rejection);
     }
 
     /* Dealloc. structures */

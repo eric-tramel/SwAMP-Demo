@@ -1,7 +1,8 @@
 %% Parameters
-gamma = 100;
-n = 2048;
-rho = 0.44;
+gamma = 50;
+n = 512;
+% rho = 0.44;
+rho = 0.3;
 alpha = 0.72;
 delta = 1e-8;
 
@@ -33,18 +34,19 @@ opts.priorDistr = 'gb';
 opts.priorPrmts = [rho, 0.0, 1.0];
 opts.learnPrior = 0;
 opts.initState = [zeros(n, 1); ones(n, 1)];
-opts.maxIter = 1000;
+opts.maxIter = 4000;
 opts.prec = 1e-8;
 opts.display = 1;
 opts.signal = x;
 opts.output = outfile;
-opts.damp = 0.5;
+opts.damp = 0.0;
 
 % Extra Feature options
 opts.mean_removal = 0;
 opts.adaptive_damp = 1;
 opts.calc_vfe = 1;
 opts.no_violations = 0;
+opts.site_rejection = 1;
 
 %% Run algorithms
 fprintf(' - Running SwAMP... ')
@@ -60,6 +62,7 @@ rss_sw = out(:,4);
 cnv_sw = out(:,5);
 if opts.calc_vfe
     vfe_sw = out(:,6);
+    violating_coeffs = out(:,8);
 end
 if opts.adaptive_damp
     damp_sw = out(:,7);
@@ -94,10 +97,10 @@ figure(2); clf;
     set(gca,'YScale','log');    
     box on;
     axis tight;
-    legend('Location','NorthEast');
-    if iterations > 1000
-        set(gca,'XScale','log');
-    end
+    legend('Location','SouthWest');
+    % if iterations > 1000
+    %     set(gca,'XScale','log');
+    % end
 
 if opts.calc_vfe
     min_vfe = min(vfe_sw);
@@ -114,8 +117,15 @@ if opts.calc_vfe
     box on; grid on;
     axis tight;
     set(gca,'YScale','log');
-    if iterations > 1000
-        set(gca,'XScale','log');
-    end
+    % if iterations > 1000
+    %     set(gca,'XScale','log');
+    % end
+end
+
+if opts.site_rejection
+    figure(4); clf;
+        plot(violating_coeffs);
+    xlabel('Iteration');
+    ylabel('Number of Site VFE Violations @ Sweep');
 end
 
