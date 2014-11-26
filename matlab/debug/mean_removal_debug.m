@@ -1,8 +1,8 @@
 %% Parameters
-gamma = 1000;
+gamma = 20;
 n = 512;
 % rho = 0.44;
-rho = 0.3;
+rho = 0.4;
 alpha = 0.72;
 delta = 1e-8;
 
@@ -67,14 +67,14 @@ Fb = [Ft,         b12*g,   b13*om;
 yb = [y;0;0]; 		% Adding in some zeros
 
 
-% Do we do okay matching ?
-figure(1); clf;
-	plot(sum(Fb.^2,2)/n);
-	title('Final Row Magnitudes');
+% % Do we do okay matching ?
+% figure(1); clf;
+% 	plot(sum(Fb.^2,2)/n);
+% 	title('Final Row Magnitudes');
 
-figure(2); clf;
-	plot(sum(Fb.^2,1)/m);
-	title('Final Col Magnitudes');
+% figure(2); clf;
+% 	plot(sum(Fb.^2,1)/m);
+% 	title('Final Col Magnitudes');
 
 %% Here is a second attempt, the Schniter way
 col   = (1/m)*F'*om - mu*on;
@@ -90,14 +90,14 @@ Fb_s = [Ft,             b12_s*g,     b13_s*om;
 	    b31_s*ct,             0, -b31_s*b13_s];
 Fb_s = sparse(Fb_s);
 
-% Do we do okay matching ?
-figure(1); clf;
-	plot(sum(Fb_s.^2,2)/n);
-	title('Final Row Magnitudes');
+% % Do we do okay matching ?
+% figure(1); clf;
+% 	plot(sum(Fb_s.^2,2)/n);
+% 	title('Final Row Magnitudes');
 
-figure(2); clf;
-	plot(sum(Fb_s.^2,1)/m);
-	title('Final Col Magnitudes');
+% figure(2); clf;
+% 	plot(sum(Fb_s.^2,1)/m);
+% 	title('Final Col Magnitudes');
 
 outfile = tempname;
 opts.solver = 'amp';
@@ -107,8 +107,8 @@ opts.priorDistr = 'gb';
 opts.priorPrmts = [rho, 0.0, 1.0];
 opts.learnPrior = 0;
 opts.initState = [zeros(n+2, 1); ones(n+2, 1)];
-opts.maxIter = 500;
-opts.prec = 1e-8;
+opts.maxIter = 1000;
+opts.prec = delta;
 opts.display = 1;
 opts.signal = x;
 opts.output = outfile;
@@ -117,7 +117,7 @@ opts.damp = 0.0;
 % Extra Feature options
 opts.mean_removal   = 1;
 opts.adaptive_damp  = 0;
-opts.calc_vfe       = 0;
+opts.calc_vfe       = 1;
 opts.no_violations  = 0;
 opts.site_rejection = 0;
 

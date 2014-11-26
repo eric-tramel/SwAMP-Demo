@@ -184,16 +184,30 @@ void amp (
         if (learn_delta && t > 0) {
             if (!is_array) {
                 delta_n = delta_d = 0; /* Sums: (w / v)^2 and (1 / v) */
-                for (mu = 0; mu < m; mu++) {
-                    delta_n += pow(w_r[mu] / v[mu], 2);
-                    delta_d += (1. / v[mu]);
+                if(!mean_removal){
+                    for (mu = 0; mu < m; mu++) {
+                        delta_n += pow(w_r[mu] / v[mu], 2);
+                        delta_d += (1. / v[mu]);
+                    }
+                }else{
+                    for (mu = 0; mu < (m-2); mu++) {
+                        delta_n += pow(w_r[mu] / v[mu], 2);
+                        delta_d += (1. / v[mu]);
+                    }
                 }
                 *delta *= (delta_n / delta_d);
             } else {
                 delta_n = delta_d = 0;
-                for (mu = 0; mu < m; mu++) {
-                    delta_n += pow(w_r[mu] * delta[mu] / v[mu], 2) / delta0[mu];
-                    delta_d += delta[mu] / v[mu];
+                if(!mean_removal){
+                    for (mu = 0; mu < m; mu++) {
+                        delta_n += pow(w_r[mu] * delta[mu] / v[mu], 2) / delta0[mu];
+                        delta_d += delta[mu] / v[mu];
+                    }
+                }else{
+                    for (mu = 0; mu < (m-2); mu++) {
+                        delta_n += pow(w_r[mu] * delta[mu] / v[mu], 2) / delta0[mu];
+                        delta_d += delta[mu] / v[mu];
+                    }                    
                 }
 
                 gamma = delta_n / delta_d;
