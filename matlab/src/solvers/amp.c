@@ -19,6 +19,8 @@ void amp (
     double last_vfe = 0;
     double local_vfe,last_local_vfe;
     double mean_site_damp = 0;
+    int n_noaux = n-2;
+    int m_noaux = m-2;
 
     /* Hard coding adaptive damping params for now */
     double damp_max = 0.999;
@@ -116,13 +118,13 @@ void amp (
 
             // If we are in mean-removal mode and this is an auxiliary variable, set
             // {a,c} to be equal to {r,sigma}
-            if (mean_removal && i >= (n - 2)) {
+            if (mean_removal && i >= n_noaux) {
                 a[i] = r[i];
                 c[i] = sig[i];
             }
 
             // Don't check for site rejections if we are on an auxiliary variable in mean_removal mode
-            if ((mean_removal && i < (n - 2)) || !mean_removal) {
+            if ((mean_removal && i < n_noaux) || !mean_removal) {
                 /* Check for a local violation */
                 if(site_rejection){
                     /* What are the local characteristics of the VFE when chaning this one variable ?*/ 
@@ -184,32 +186,17 @@ void amp (
         if (learn_delta && t > 0) {
             if (!is_array) {
                 delta_n = delta_d = 0; /* Sums: (w / v)^2 and (1 / v) */
-                if(!mean_removal){
-                    for (mu = 0; mu < m; mu++) {
-                        delta_n += pow(w_r[mu] / v[mu], 2);
-                        delta_d += (1. / v[mu]);
-                    }
-                }else{
-                    for (mu = 0; mu < (m-2); mu++) {
-                        delta_n += pow(w_r[mu] / v[mu], 2);
-                        delta_d += (1. / v[mu]);
-                    }
+                for (mu = 0; mu < (mean_removal ? m_noaux : m); mu++) {
+                    delta_n += pow(w_r[mu] / v[mu], 2);
+                    delta_d += (1. / v[mu]);
                 }
                 *delta *= (delta_n / delta_d);
             } else {
                 delta_n = delta_d = 0;
-                if(!mean_removal){
-                    for (mu = 0; mu < m; mu++) {
-                        delta_n += pow(w_r[mu] * delta[mu] / v[mu], 2) / delta0[mu];
-                        delta_d += delta[mu] / v[mu];
-                    }
-                }else{
-                    for (mu = 0; mu < (m-2); mu++) {
-                        delta_n += pow(w_r[mu] * delta[mu] / v[mu], 2) / delta0[mu];
-                        delta_d += delta[mu] / v[mu];
-                    }                    
+                for (mu = 0; mu < (mean_removal ? m_noaux : m); mu++) {
+                    delta_n += pow(w_r[mu] * delta[mu] / v[mu], 2) / delta0[mu];
+                    delta_d += delta[mu] / v[mu];
                 }
-
                 gamma = delta_n / delta_d;
                 if (disp) printf("\tgamma = %g\n", gamma);
                 for (mu = 0; mu < m; mu++) delta[mu] = gamma * delta0[mu];

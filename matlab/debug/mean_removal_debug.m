@@ -101,8 +101,8 @@ Fb_s = sparse(Fb_s);
 
 outfile = tempname;
 opts.solver = 'amp';
-opts.delta = delta;
-opts.learnDelta = 0;
+opts.delta = 1.0;
+opts.learnDelta = 1;
 opts.priorDistr = 'gb';
 opts.priorPrmts = [rho, 0.0, 1.0];
 opts.learnPrior = 0;
