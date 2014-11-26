@@ -19,10 +19,6 @@ void amp (
     double last_vfe = 0;
     double local_vfe,last_local_vfe;
     double mean_site_damp = 0;
-    int AUXA_N = n-2;
-    int AUXB_N = n-1;
-    int AUXA_M = m-2;
-    int AUXB_M = m-1;
 
     /* Hard coding adaptive damping params for now */
     double damp_max = 0.999;
@@ -81,11 +77,11 @@ void amp (
             g[mu] = w_r[mu] / v[mu];
             w_r[mu] = (y[mu] - a_proj[mu]) + c_proj[mu] * g[mu];
             
-            if(mean_removal && (mu == AUXA_M || mu == AUXB_M)){
+            if(mean_removal && mu >= (m - 2)){
                 // Use a reall small noise to simulate the delta/impulse channel for the 
                 // auxiliary coefficients
                 v[mu] = c_proj[mu];
-            }else{
+            } else {
                 v[mu] = (is_array ? delta[mu] : *delta) + c_proj[mu];
             }
         }
@@ -111,22 +107,22 @@ void amp (
             r[i] = damp * r[i] + (1 - damp) * (a[i] + sig[i] * w_proj);
 
             /* ... then, a and c ... */
-            if(calc_vfe){
+            if (calc_vfe) {
                 logz_old = logz[i];
                 prior(1, &r[i], &sig[i], prior_prmts, &a[i], &c[i], &logz[i], 0);                
-            }else{
+            } else {
                 prior(1, &r[i], &sig[i], prior_prmts, &a[i], &c[i], NULL, 0);
             }
 
             // If we are in mean-removal mode and this is an auxiliary variable, set
             // {a,c} to be equal to {r,sigma}
-            if(mean_removal && (i == AUXA_N || i == AUXB_N)){
+            if (mean_removal && i >= (n - 2)) {
                 a[i] = r[i];
                 c[i] = sig[i];
             }
 
             // Don't check for site rejections if we are on an auxiliary variable in mean_removal mode
-            if((mean_removal && (i!=AUXA_N) && (i!=AUXB_N)) || !mean_removal){
+            if ((mean_removal && i < (n - 2)) || !mean_removal) {
                 /* Check for a local violation */
                 if(site_rejection){
                     /* What are the local characteristics of the VFE when chaning this one variable ?*/ 
@@ -214,14 +210,14 @@ void amp (
         
         mse = 0;
         if (x) {
-            if(!mean_removal){
+            if (!mean_removal) {
                 for (i = 0; i < n; i++)
                     mse += pow(a[i] - x[i], 2);
                 mse /= n;
-            }else{
-                for (i = 0; i < (n-2); i++)
+            } else {
+                for (i = 0; i < (n - 2); i++)
                     mse += pow(a[i] - x[i], 2);
-                mse /= (n-2);
+                mse /= (n - 2);
             }
         }
 
