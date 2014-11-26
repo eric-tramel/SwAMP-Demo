@@ -15,7 +15,8 @@ void amp (
     double site_violation;
     double delta_n, delta_d, delta_mean, gamma;
     double mse;
-    double vfe, last_vfe = 0;
+    double vfe = 0;
+    double last_vfe = 0;
     double local_vfe,last_local_vfe;
     double mean_site_damp = 0;
     int AUXA_N = n-1;
@@ -170,7 +171,7 @@ void amp (
         }
 
         /* Update Damping */    
-        if(adaptive_damp){
+        if(adaptive_damp && (t > 0)){
             if(vfe > last_vfe){
                 /* In this case we have observed the VFE growing */
                 damp = min(damp*(1 + damp_modifier_up),damp_max);

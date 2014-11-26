@@ -123,7 +123,8 @@ opts.site_rejection = 0;
 %% Run algorithms
 fprintf(' - Running SwAMP... ')
 tic
-a_sw = swamp(yb, Fb_s, opts);
+a_with_aux = swamp(yb, Fb_s, opts);
+a_sw = a_with_aux(1:(end-2));
 elapsed = toc;
 
 out = dlmread(outfile, ';', 1, 0);
