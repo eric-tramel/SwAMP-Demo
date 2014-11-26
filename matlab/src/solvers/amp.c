@@ -9,7 +9,7 @@ void amp (
         double *a, double *c, double *r, double *sig,
         int mean_removal, int calc_vfe, int adaptive_damp, int no_violations, int site_rejection  
     ) {
-    double *w_r, *v, *g, *a_proj, *c_proj, *delta0, *logz, *per_site_damp;
+    double *w_r, *v, *g, *a_proj, *c_proj, *delta0, *logz;
     double w_proj, v_proj, a_old, c_old, r_old, s_old, logz_old, diff, res;
     double site_violation_count = 0;
     double site_violation;
@@ -37,10 +37,6 @@ void amp (
         // Only allocating the space for logz if we are actually going to use it.
         logz = malloc(sizeof(double) * n);
     }
-    // if(site_rejection){
-    //     per_site_damp = malloc(sizeof(double)*n);
-    //     for(i = 0; i<n; i++) per_site_damp[i] = 0.5;
-    // }
     w_r = malloc(sizeof(double) * m);
     v = malloc(sizeof(double) * m);
     g = malloc(sizeof(double) * m);
@@ -260,5 +256,4 @@ void amp (
     free(v);
     free(w_r);
     if(calc_vfe) free(logz);
-    // if(site_rejection) free(per_site_damp);
 }
