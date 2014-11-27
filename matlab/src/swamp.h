@@ -46,6 +46,13 @@ double awgn_vfe (size_t n, size_t m,
             double *r, double *sig, 
             double *delta, int is_array,
             int local_idx);
+double awgn_vfe_sitechange  (size_t n, size_t m, 
+            double *y,
+            double *F, int *ir, int *jc,
+            double a_site, double c_site, double log_z_site, double r_site, double sig_site, 
+            double *a, double *c, double *log_z, double *r, double *sig, 
+            double *delta, int is_array,
+            int local_idx);
 
 static inline double max( double a, double b ) { return a > b ? a : b; }
 static inline double min( double a, double b ) { return a < b ? a : b; }

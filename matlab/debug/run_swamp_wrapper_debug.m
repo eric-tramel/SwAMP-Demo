@@ -1,11 +1,10 @@
 %% Parameters
 clear;
 
-gamma = 0;
-eta = 0.05;
+gamma = 20;
+eta   = 1;
 n = 512;
-% rho = 0.44;
-rho = 0.2;
+rho = 0.3;
 alpha = 0.6;
 delta = 1e-8;
 
@@ -38,7 +37,7 @@ opts.priorDistr = 'gb';
 opts.priorPrmts = [rho, 0.0, 1.0];
 opts.learnPrior = 0;
 opts.initState = [zeros(n+2, 1); ones(n+2, 1)];
-opts.maxIter = 1000;
+opts.maxIter = 300;
 opts.prec = 1e-9;
 opts.display = 1;
 opts.signal = x;
@@ -46,8 +45,8 @@ opts.output = outfile;
 opts.damp = 0.0;
 
 % Extra Feature options
-opts.mean_removal   = 1;
-opts.adaptive_damp  = 1;
+opts.mean_removal   = 0;
+opts.adaptive_damp  = 0;
 opts.calc_vfe       = 1;
 opts.no_violations  = 0;
 opts.site_rejection = 1;
@@ -122,4 +121,13 @@ if opts.calc_vfe
     % if iterations > 1000
     %     set(gca,'XScale','log');
     % end
+end
+
+if opts.site_rejection
+   figure(4); clf;
+        plot(violating_coeffs);
+    xlabel('Iteration');
+    ylabel('# Violating Sites');
+    box on; grid on;
+    axis tight;
 end
