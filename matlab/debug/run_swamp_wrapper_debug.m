@@ -1,8 +1,8 @@
 %% Parameters
 clear;
 
-gamma = 20;
-eta   = 1;
+gamma = 200;
+eta   = 4;
 n = 512;
 rho = 0.3;
 alpha = 0.6;
@@ -20,13 +20,14 @@ x = zeros(n, 1);
 supp = randperm(n, k);
 x(supp) = randn(k, 1);
 % F = gamma / n + randn(m, n) / sqrt(n);
-% F = sparse(F);
 
 P = randn(m, r); Q = randn(r, n);
 F = P * Q / n + gamma/n;
 
 w = sqrt(delta) * randn(m, 1);
 y = F * x + w;
+
+% F = sparse(F);
 
 outfile = tempname;
 opts.solver = 'amp';
@@ -45,11 +46,11 @@ opts.output = outfile;
 opts.damp = 0.0;
 
 % Extra Feature options
-opts.mean_removal   = 0;
+opts.mean_removal   = 1;
 opts.adaptive_damp  = 0;
-opts.calc_vfe       = 1;
+opts.calc_vfe       = 0;
 opts.no_violations  = 0;
-opts.site_rejection = 1;
+opts.site_rejection = 0;
 
 %% Run algorithms
 fprintf(' - Running SwAMP... ')

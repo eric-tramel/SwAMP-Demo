@@ -1,5 +1,4 @@
 function [a, c, r, s, final_prior] = run_swamp(y,F,opts)
-F = sparse(F);
 
 % Check to see if we are in mean removal mode. 
 mean_removal = 0;

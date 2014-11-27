@@ -14,6 +14,8 @@ void amp_dense (
     double delta_n, delta_d, delta_mean, gamma;
     double mse;
     double vfe, last_vfe = 0;
+    int n_noaux = n-2;
+    int m_noaux = m-2;
 
     /* Hard coding adaptive damping params for now */
     double damp_max = 0.999;
@@ -22,7 +24,7 @@ void amp_dense (
     double damp_modifier_down = 0.1;
 
     unsigned int i, mu, idx, t;
-    int *seq, key;
+    int *seq, key;    
 
     /* Alloc. structures */
     if(calc_vfe){
@@ -65,7 +67,14 @@ void amp_dense (
         for (mu = 0; mu < m; mu++) {
             g[mu] = w_r[mu] / v[mu];
             w_r[mu] = (y[mu] - a_proj[mu]) + c_proj[mu] * g[mu];
-            v[mu] = (is_array ? delta[mu] : *delta) + c_proj[mu];
+            // v[mu] = (is_array ? delta[mu] : *delta) + c_proj[mu];
+            if(mean_removal && mu >= (m - 2)){
+                // Use a reall small noise to simulate the delta/impulse channel for the 
+                // auxiliary coefficients
+                v[mu] = c_proj[mu];
+            } else {
+                v[mu] = (is_array ? delta[mu] : *delta) + c_proj[mu];
+            }
         }
 
         /* Sweep over all n variables, in random order */
@@ -91,6 +100,13 @@ void amp_dense (
             }else{
                 prior(1, &r[i], &sig[i], prior_prmts, &a[i], &c[i], NULL, 0);
             }
+
+            // If we are in mean-removal mode and this is an auxiliary variable, set
+            // {a,c} to be equal to {r,sigma}
+            if (mean_removal && i >= n_noaux) {
+                a[i] = r[i];
+                c[i] = sig[i];
+            }            
 
             /* ... and finally, w_r and v. */
             for (mu = 0; mu < m; mu++) { 
@@ -127,14 +143,14 @@ void amp_dense (
         if (learn_delta && t > 0) {
             if (!is_array) {
                 delta_n = delta_d = 0; /* Sums: (w / v)^2 and (1 / v) */
-                for (mu = 0; mu < m; mu++) {
+                for (mu = 0; mu < (mean_removal ? m_noaux : m); mu++) {
                     delta_n += pow(w_r[mu] / v[mu], 2);
                     delta_d += (1. / v[mu]);
                 }
                 *delta *= (delta_n / delta_d);
             } else {
                 delta_n = delta_d = 0;
-                for (mu = 0; mu < m; mu++) {
+                for (mu = 0; mu < (mean_removal ? m_noaux : m); mu++) {
                     delta_n += pow(w_r[mu] * delta[mu] / v[mu], 2) / delta0[mu];
                     delta_d += delta[mu] / v[mu];
                 }
@@ -153,9 +169,15 @@ void amp_dense (
         
         mse = 0;
         if (x) {
-            for (i = 0; i < n; i++)
-                mse += pow(a[i] - x[i], 2);
-            mse /= n;
+            if (!mean_removal) {
+                for (i = 0; i < n; i++)
+                    mse += pow(a[i] - x[i], 2);
+                mse /= n;
+            } else {
+                for (i = 0; i < (n - 2); i++)
+                    mse += pow(a[i] - x[i], 2);
+                mse /= (n - 2);
+            }
         }
 
         if (is_array) {
@@ -166,8 +188,13 @@ void amp_dense (
             delta_mean = *delta;
         }
 
-        if (disp) printf("t: %3d; mse: %.4e, est noise: %.4e, rss: %.4e, diff: %.4e\n", 
+        if(disp && adaptive_damp){
+            printf("t: %3d; mse: %.4e, est noise: %.4e, rss: %.4e, diff: %.4e, damp: %.4e\n", 
+                t, mse, delta_mean, res, diff / n,damp);
+        }else{
+            printf("t: %3d; mse: %.4e, est noise: %.4e, rss: %.4e, diff: %.4e\n", 
                 t, mse, delta_mean, res, diff / n);
+        }
         if (output) fprintf(output, "%d;%g;%g;%g;%g;%g;%g\n", 
                 t, mse, delta_mean, res, diff / n,vfe,damp);
         mexEvalString("drawnow");
