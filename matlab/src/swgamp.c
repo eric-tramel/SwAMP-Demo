@@ -7,13 +7,21 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) {
     double *a, *c, *r, *sig;
     int learn_channel, learn_prior;
 
+    /* Extra Feature Flags*/
+    int mean_removal;                   /* Use mean removal via auxiliary variables */
+    int adaptive_damp;                  /* Use VFE to change damping per sweep */
+    int calc_vfe;                       /* Save/Output per sweep VFE calc */
+    int no_violations;                  /* Force VFE to decrease, strictly. */
+    int site_rejection;                 /* Check for VFE violations at the site level */
+
     void (*channel), (*prior);          /* Auxiliary variables */
     int *ir, *jc;
 
     mwIndex *ir_, *jc_;
     mxArray *opt_tm, *opt_ep, *opt_ch, *opt_cp, *opt_lc,
             *opt_pr, *opt_pm, *opt_lp, *opt_in, *opt_da, 
-            *opt_di, *opt_ou, *opt_hi, *opt_si;
+            *opt_di, *opt_ou, *opt_hi, *opt_si, *opt_mr,
+            *opt_ad, *opt_cv, *opt_nv, *opt_sr;
 
     size_t m, n, nnz;
     unsigned int mu, i, key;
@@ -44,10 +52,16 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) {
         opt_ou = mxGetField(prhs[2], 0, "output");
         opt_hi = mxGetField(prhs[2], 0, "history");
         opt_si = mxGetField(prhs[2], 0, "signal");
+        opt_mr = mxGetField(prhs[2], 0, "mean_removal");
+        opt_ad = mxGetField(prhs[2], 0, "adaptive_damp");
+        opt_cv = mxGetField(prhs[2], 0, "calc_vfe");
+        opt_nv = mxGetField(prhs[2], 0, "no_violations");
+        opt_sr = mxGetField(prhs[2], 0, "site_rejection");
     } else {
         opt_tm = opt_ep = opt_ch = opt_cp = opt_lc =
             opt_pr = opt_pm = opt_lp = opt_in = opt_da = 
-            opt_di = opt_ou = opt_hi = NULL;
+            opt_di = opt_ou = opt_hi = opt_mr = opt_ad =
+            opt_cv = opt_nv = opt_sr = NULL;
     }
 
     if (opt_ch) {                       /* Channel type */
@@ -98,6 +112,24 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) {
     history = opt_hi ? fopen(mxArrayToString(opt_hi), "w") : NULL;
     x = opt_si ? mxGetPr(mxDuplicateArray(opt_si)) : NULL;
 
+    /* Extra Features */
+    mean_removal = opt_mr ? *mxGetPr(opt_mr) : 0;
+    adaptive_damp = opt_ad ? *mxGetPr(opt_ad) : 0;
+    calc_vfe = opt_cv ? *mxGetPr(opt_cv) : 0;
+    no_violations = opt_nv ? *mxGetPr(opt_nv) : 0;
+    site_rejection = opt_sr ? *mxGetPr(opt_sr) : 0;
+        /* Force calc_vfe flag if we need it. */
+        if(adaptive_damp && ~calc_vfe) calc_vfe = 1;
+        if(site_rejection && ~calc_vfe) calc_vfe = 1;  
+    if(disp){
+        printf("\n");
+        printf("[ * Mean Removal   : %d]\n",mean_removal);
+        printf("[ * Adaptive Damp  : %d]\n",adaptive_damp);
+        printf("[ * Calc VFE       : %d]\n",calc_vfe);
+        printf("[ * No Violations  : %d]\n",no_violations);
+        printf("[ * Site Rejection : %d]\n",site_rejection);
+    }      
+
     /* Set-up output */
     plhs[0] = mxCreateDoubleMatrix(n, 1, mxREAL);
     plhs[1] = mxCreateDoubleMatrix(n, 1, mxREAL);
@@ -133,7 +165,8 @@ void mexFunction( int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[] ) {
             channel, ch_prmts, learn_channel,
             prior, pr_prmts, learn_prior, 
             t_max, eps, damp, disp, output, history, x,
-            a, c, r, sig);
+            a, c, r, sig,
+            mean_removal,calc_vfe,adaptive_damp,no_violations,site_rejection);
     } else {
         mexErrMsgTxt("Convert F to sparse before using this solver.");
     };

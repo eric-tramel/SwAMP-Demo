@@ -8,7 +8,8 @@ void gamp (
         void (*channel) (size_t, double*, double*, double*, double*, double*, double*, int), double *ch_prmts, int learn_channel, 
         void (*prior) (int, double*, double*, double*, double*, double*, double*, int), double *pr_prmts, int learn_prior, 
         int t_max, double eps, double damp, int disp, FILE *output, FILE *history, double *x,
-        double *a, double *c, double *r, double *sig
+        double *a, double *c, double *r, double *sig,
+        int mean_removal, int calc_vfe, int adaptive_damp, int no_violations, int site_rejection
     );
 
 /* PRIORS */
