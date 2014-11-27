@@ -137,7 +137,7 @@ void amp_dense (
         }
 
         /* Update prior parameters */
-        if (learn_prior) prior(n, r, sig, prior_prmts, a, c, NULL, 1);
+        if (learn_prior) prior((mean_removal ? n_noaux : n), r, sig, prior_prmts, a, c, NULL, 1);
 
         /* Update delta */
         if (learn_delta && t > 0) {
