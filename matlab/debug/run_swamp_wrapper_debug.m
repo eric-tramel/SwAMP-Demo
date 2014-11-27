@@ -1,11 +1,12 @@
 %% Parameters
 clear;
 
-gamma = 1000;
-n = 4096;
+gamma = 0;
+eta = 0.05;
+n = 512;
 % rho = 0.44;
-rho = 0.4;
-alpha = 0.72;
+rho = 0.2;
+alpha = 0.6;
 delta = 1e-8;
 
 fprintf(' - Parameters are: N = %d, \\rho = %.2f, \\alpha = %.2f, \\Delta = %.2e, \\gamma = %d.\n', ...
@@ -13,27 +14,32 @@ fprintf(' - Parameters are: N = %d, \\rho = %.2f, \\alpha = %.2f, \\Delta = %.2e
 
 k = ceil(rho * n);
 m = ceil(alpha * n);
+r = ceil(eta * n);
 
 %% Generate problem
 x = zeros(n, 1);
 supp = randperm(n, k);
 x(supp) = randn(k, 1);
-F = gamma / n + randn(m, n) / sqrt(n);
-F = sparse(F);
+% F = gamma / n + randn(m, n) / sqrt(n);
+% F = sparse(F);
+
+P = randn(m, r); Q = randn(r, n);
+F = P * Q / n + gamma/n;
+
 w = sqrt(delta) * randn(m, 1);
 y = F * x + w;
 
 outfile = tempname;
 opts.solver = 'amp';
 opts.channelType = 'gaussian';
-opts.delta = 1.0;
-opts.learnDelta = 1;
+opts.delta = delta;
+opts.learnDelta = 0;
 opts.priorDistr = 'gb';
 opts.priorPrmts = [rho, 0.0, 1.0];
 opts.learnPrior = 0;
 opts.initState = [zeros(n+2, 1); ones(n+2, 1)];
 opts.maxIter = 1000;
-opts.prec = 1e-5;
+opts.prec = 1e-9;
 opts.display = 1;
 opts.signal = x;
 opts.output = outfile;
@@ -41,10 +47,10 @@ opts.damp = 0.0;
 
 % Extra Feature options
 opts.mean_removal   = 1;
-opts.adaptive_damp  = 0;
+opts.adaptive_damp  = 1;
 opts.calc_vfe       = 1;
 opts.no_violations  = 0;
-opts.site_rejection = 0;
+opts.site_rejection = 1;
 
 %% Run algorithms
 fprintf(' - Running SwAMP... ')
@@ -58,6 +64,13 @@ mse_sw = out(:, 2);
 delta_sw = out(:,3);
 rss_sw = out(:,4);
 cnv_sw = out(:,5);
+if opts.calc_vfe
+    vfe_sw = out(:,6);
+    violating_coeffs = out(:,8);
+end
+if opts.adaptive_damp
+    damp_sw = out(:,7);
+end
 
 fprintf('Elapsed time: %.2fs, MSE: %.2e.\n', elapsed, mse_sw(end)); 
 
@@ -90,3 +103,23 @@ figure(2); clf;
     axis tight;
     legend('Location','SouthWest');
 
+
+if opts.calc_vfe
+    min_vfe = min(vfe_sw);
+    shifted_vfe_sw = (vfe_sw - min_vfe) + 1;
+
+    figure(3); clf;
+        if opts.adaptive_damp
+            plotyy(1:iterations,shifted_vfe_sw,1:iterations,damp_sw);
+        else
+            plot(shifted_vfe_sw,'-b','LineWidth',2);
+        end
+    xlabel('Iteration');
+    ylabel('Shifted VFE');
+    box on; grid on;
+    axis tight;
+    set(gca,'YScale','log');
+    % if iterations > 1000
+    %     set(gca,'XScale','log');
+    % end
+end
