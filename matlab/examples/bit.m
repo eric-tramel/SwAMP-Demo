@@ -15,7 +15,7 @@ function bit(gamma)
     supp = randperm(n, k);
     x(supp) = randn(k, 1);
     F = sparse(gamma / n + randn(m, n) / sqrt(n));
-    y = sign(F * x);
+    y = sign(F * x + sqrt(delta)*randn(m,1));
 
     %% Setup algorithm
     % Obs.: the 'signal' option is only being passed so that the MSE may be
@@ -32,9 +32,10 @@ function bit(gamma)
     opts.maxIter = 50;
     opts.prec = 1e-5;
     opts.damp = 0;
-    opts.display = 0;
+    opts.display = 1;
     opts.signal = x;
     opts.output = outfile;
+
 
     %% Run algorithms
     fprintf(' - Running G-SwAMP... ')

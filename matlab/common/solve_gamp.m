@@ -64,7 +64,7 @@ function [g, dg, prmts_new] = channel_pm1( y, w, v, prmts )
     dg = -g .* (w ./ v_eff + g);
 
     %prmts_new = [delta * sum(g. ^ 2) / sum(-dg)];
-    prmts = prmts;
+    prmts_new = prmts;
 end
 
 % PRIORS

@@ -1,5 +1,5 @@
 %% Parameters
-gamma = 50;
+gamma = 400;
 n = 512;
 rho = 0.44;
 alpha = 0.72;
@@ -26,6 +26,7 @@ F = sparse(F);
 % estimate!
 outfile = tempname;
 
+opts.channelType = 'gaussian';
 opts.solver = 'amp';
 opts.delta = delta;
 opts.learnDelta = 0;
@@ -33,7 +34,7 @@ opts.priorDistr = 'gb';
 opts.priorPrmts = [rho, 0.0, 1.0];
 opts.learnPrior = 0;
 opts.initState = [zeros(n, 1); ones(n, 1)];
-opts.maxIter = 4000;
+opts.maxIter = 200;
 opts.prec = 1e-8;
 opts.display = 1;
 opts.signal = x;
@@ -50,7 +51,8 @@ opts.site_rejection = 0;
 %% Run algorithms
 fprintf(' - Running SwAMP... ')
 tic
-a_sw = swamp(y, F, opts);
+% a_sw = swamp(y, F, opts);
+a_sw = run_swamp(y,F,opts);
 elapsed = toc;
 
 out = dlmread(outfile, ';', 1, 0);

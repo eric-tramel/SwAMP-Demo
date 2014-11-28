@@ -16,6 +16,11 @@ void gamp(
     int n_noaux = n-2;
     int m_noaux = m-2;
 
+    int m_aux_a = m-2;
+    int m_aux_b = m-1;
+    int n_aux_a = n-2;
+    int n_aux_b = n-1;
+
     unsigned int i, mu, idx, t;
     int *seq, key;
 
@@ -63,7 +68,20 @@ void gamp(
             w[mu] = a_proj[mu] - c_proj[mu] * g[mu];
             v[mu] = c_proj[mu];
         }
-        channel(m, y, w, v, ch_prmts, g, dg, 0);
+        // For Mean Removal: We want to perform the channel operation to calculate the
+        //                   proper channel-based coefficients on the non-auxilliary 
+        //                   terms, but we want to utilize the "impulse" channel for the
+        //                   auxilliary terms themselves.
+        channel((mean_removal ? m_noaux : m), y, w, v, ch_prmts, g, dg, 0);     /* Only on non-aux terms */
+        if(mean_removal){
+            // Double check to see if these should actually be negatives
+            g[m_aux_a] = -w[m_aux_a] / v[m_aux_a];
+            g[m_aux_b] = -w[m_aux_b] / v[m_aux_b];
+            // Double check to see if these should actually be negatives
+            dg[m_aux_a] = -1/v[m_aux_a];
+            dg[m_aux_b] = -1/v[m_aux_b];
+        }
+
 
         /* Sweep over all n variables, in random order */
         diff = 0., res = 0.;
@@ -81,7 +99,17 @@ void gamp(
             sig[i] = damp * sig[i] + (1 - damp) * (1. / dg_proj);
             r[i] = damp * r[i] + (1 - damp) * (a[i] + sig[i] * g_proj);
 
-            prior(1, &r[i], &sig[i], pr_prmts, &a[i], &c[i], NULL, 0);
+            /* Calculate a and c */
+            if(!mean_removal || (mean_removal && i < n_noaux)){
+                prior(1, &r[i], &sig[i], pr_prmts, &a[i], &c[i], NULL, 0);
+            }else{
+                // Operate in a "priorless" mode for the auxilliary terms
+                // when using mean-removal
+                a[i] = r[i];
+                c[i] = sig[i];
+            }
+
+
 
             /* Update {w, v}, {g, dg} */
             for (idx = jc[i]; idx < jc[i + 1]; idx++) {
@@ -90,15 +118,22 @@ void gamp(
                 w[mu] += F[idx] * (a[i] - a_old);
                 v[mu] += (F[idx] * F[idx]) * (c[i] - c_old);
 
-                channel(1, &y[mu], &w[mu], &v[mu], ch_prmts, &g[mu], &dg[mu], 0);
+                if(!mean_removal || (mean_removal && mu < m_noaux)){
+                    channel(1, &y[mu], &w[mu], &v[mu], ch_prmts, &g[mu], &dg[mu], 0);
+                }else{
+                    // Make sure that we use the impulse prior on these auxilliary terms
+                    g[mu]  = -w[mu]/v[mu];
+                    dg[mu] = -1/v[mu];
+                }
             }
 
             diff += fabs(a[i] - a_old);
         }
 
         /* Update channel and prior parameters */
-        if (learn_channel) channel(m, y, w, v, ch_prmts, g, dg, 1);
-        if (learn_prior) prior(n, r, sig, pr_prmts, a, c, NULL, 1);
+        // Only update these terms based upon the non-auxilliary terms
+        if (learn_channel) channel((mean_removal ? m_noaux : m), y, w, v, ch_prmts, g, dg, 1);
+        if (learn_prior) prior((mean_removal ? n_noaux : n), r, sig, pr_prmts, a, c, NULL, 1);
 
         /* Compute averages */
         res = 0;
@@ -109,11 +144,12 @@ void gamp(
         mse = 0;
         if (x) {
             a_n = 0;
-            for (i = 0; i < n; i++)
+            // Only claculate the MSE on the non-auxilliary terms
+            for (i = 0; i < (mean_removal ? n_noaux : n); i++)
                 a_n += pow(a[i], 2);
             a_n = sqrt(a_n);
 
-            for (i = 0; i < n; i++)
+            for (i = 0; i < (mean_removal ? n_noaux : n); i++)
                 mse += pow(a[i] / a_n - x[i] / x_n, 2);
         }
 

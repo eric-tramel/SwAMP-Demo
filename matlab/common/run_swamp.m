@@ -7,7 +7,14 @@ if isfield(opts,'mean_removal')
 end
 
 if mean_removal
-	[m,n] = size(F);
+    [m,n] = size(F);
+    
+    if isfield(opts,'initState')
+        inita = opts.initState(1:n/2);
+        initc = opts.initState((n/2+1):end);
+        opts.initState = [inita; 0; 0; initc; 1; 1];
+    end
+	
 	on = ones(n,1);
 	om = ones(m,1);
 
