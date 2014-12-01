@@ -1,7 +1,7 @@
 #include "../swgamp.h"
 
 /* (Sequential) AMP for sparse matrices */
-void gamp( 
+void gamp ( 
         size_t n, size_t m, double *y, double *F, int *ir, int *jc, 
         void (*channel) (size_t, double*, double*, double*, double*, double*, double*, int), double *ch_prmts, int learn_channel, 
         void (*prior) (int, double*, double*, double*, double*, double*, double*, int), double *pr_prmts, int learn_prior, 
@@ -13,13 +13,8 @@ void gamp(
     double a_old, c_old, g_proj, dg_proj;
     double diff, res, mse;
     double x_n, a_n;
-    int n_noaux = n-2;
-    int m_noaux = m-2;
 
-    int m_aux_a = m-2;
-    int m_aux_b = m-1;
-    int n_aux_a = n-2;
-    int n_aux_b = n-1;
+    int n_eff, m_eff;
 
     unsigned int i, mu, idx, t;
     int *seq, key;
@@ -46,6 +41,11 @@ void gamp(
         x_n = sqrt(x_n);
     }
 
+    if (mean_removal)
+        n_eff = n - 2, m_eff = m - 2;
+    else
+        n_eff = n, m_eff = m;
+
     /* Iterate GAMP */
     if (output) fprintf(output, "# t; MSE; RSS; diff\n");
     for (t = 0; t < t_max; t++) {
@@ -68,20 +68,12 @@ void gamp(
             w[mu] = a_proj[mu] - c_proj[mu] * g[mu];
             v[mu] = c_proj[mu];
         }
-        // For Mean Removal: We want to perform the channel operation to calculate the
-        //                   proper channel-based coefficients on the non-auxilliary 
-        //                   terms, but we want to utilize the "impulse" channel for the
-        //                   auxilliary terms themselves.
-        channel((mean_removal ? m_noaux : m), y, w, v, ch_prmts, g, dg, 0);     /* Only on non-aux terms */
-        if(mean_removal){
-            // Double check to see if these should actually be negatives
-            g[m_aux_a] = -w[m_aux_a] / v[m_aux_a];
-            g[m_aux_b] = -w[m_aux_b] / v[m_aux_b];
-            // Double check to see if these should actually be negatives
-            dg[m_aux_a] = -1/v[m_aux_a];
-            dg[m_aux_b] = -1/v[m_aux_b];
+        channel(m_eff, y, w, v, ch_prmts, g, dg, 0);
+        if (mean_removal) {
+            g[m - 1] = -w[m - 1] / v[m - 1], g[m - 2] = -w[m - 2] / v[m - 2];
+            dg[m - 1] = -1.0 / v[m - 1], dg[m - 2] = -1.0 / v[m - 2];
         }
-
+        /* (channel is delta for auxiliary factors) */ 
 
         /* Sweep over all n variables, in random order */
         diff = 0., res = 0.;
@@ -100,16 +92,11 @@ void gamp(
             r[i] = damp * r[i] + (1 - damp) * (a[i] + sig[i] * g_proj);
 
             /* Calculate a and c */
-            if(!mean_removal || (mean_removal && i < n_noaux)){
-                prior(1, &r[i], &sig[i], pr_prmts, &a[i], &c[i], NULL, 0);
-            }else{
-                // Operate in a "priorless" mode for the auxilliary terms
-                // when using mean-removal
-                a[i] = r[i];
-                c[i] = sig[i];
-            }
-
-
+            if (i < n_eff)
+                prior(1, &r[i], &sig[i], pr_prmts, &a[i], &c[i], NULL, 0); 
+            else
+                a[i] = r[i], c[i] = sig[i];
+            /* (prior is uniform for auxiliary variables) */
 
             /* Update {w, v}, {g, dg} */
             for (idx = jc[i]; idx < jc[i + 1]; idx++) {
@@ -118,22 +105,19 @@ void gamp(
                 w[mu] += F[idx] * (a[i] - a_old);
                 v[mu] += (F[idx] * F[idx]) * (c[i] - c_old);
 
-                if(!mean_removal || (mean_removal && mu < m_noaux)){
+                if (mu < m_eff)
                     channel(1, &y[mu], &w[mu], &v[mu], ch_prmts, &g[mu], &dg[mu], 0);
-                }else{
-                    // Make sure that we use the impulse prior on these auxilliary terms
-                    g[mu]  = -w[mu]/v[mu];
-                    dg[mu] = -1/v[mu];
-                }
+                else
+                    g[mu] = -w[mu] / v[mu], dg[mu] = -1.0 / v[mu];
+                /* (channel is delta for auxiliary factors) */ 
             }
 
             diff += fabs(a[i] - a_old);
         }
 
         /* Update channel and prior parameters */
-        // Only update these terms based upon the non-auxilliary terms
-        if (learn_channel) channel((mean_removal ? m_noaux : m), y, w, v, ch_prmts, g, dg, 1);
-        if (learn_prior) prior((mean_removal ? n_noaux : n), r, sig, pr_prmts, a, c, NULL, 1);
+        if (learn_channel) channel(m_eff, y, w, v, ch_prmts, g, dg, 1);
+        if (learn_prior) prior(n_eff, r, sig, pr_prmts, a, c, NULL, 1);
 
         /* Compute averages */
         res = 0;
@@ -144,20 +128,19 @@ void gamp(
         mse = 0;
         if (x) {
             a_n = 0;
-            // Only claculate the MSE on the non-auxilliary terms
-            for (i = 0; i < (mean_removal ? n_noaux : n); i++)
+            for (i = 0; i < n_eff; i++)
                 a_n += pow(a[i], 2);
             a_n = sqrt(a_n);
 
-            for (i = 0; i < (mean_removal ? n_noaux : n); i++)
+            for (i = 0; i < n_eff; i++)
                 mse += pow(a[i] / a_n - x[i] / x_n, 2);
         }
 
         /* Print some info. */
         if (disp)
-            printf("t = %3d: mse = %.4e, RSS = %.4e, diff. = %.4e\n", t, mse, res, diff / n);
+            printf("t = %3d: mse = %.4e, RSS = %.4e, diff. = %.4e\n", t, mse, res, diff / n_eff);
         if (output)
-            fprintf(output, "%d;%g;%g;%g\n", t, mse, res, diff / n);
+            fprintf(output, "%d;%g;%g;%g\n", t, mse, res, diff / n_eff);
         mexEvalString("drawnow");
 
         if (history) {
@@ -167,7 +150,7 @@ void gamp(
         }
 
         /* Check for convergence */
-        if (diff / n < eps) break;
+        if (diff / n_eff < eps) break;
     }
 
     /* Dealloc. structures */

@@ -1,10 +1,9 @@
-
 %% Parameters
 n = 512;
-rho = 1./8;
-alpha = 3;
+rho = 1./16;
+alpha = 6;
 delta = 0;
-gamma = 0;
+gamma = 50;
 
 fprintf(' - Parameters are: N = %d, \\rho = %.2f, \\alpha = %.2f, \\gamma = %d.\n', ...
     n, rho, alpha, gamma)
