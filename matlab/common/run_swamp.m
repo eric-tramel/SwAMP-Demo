@@ -44,15 +44,40 @@ if mean_removal
 end
 
 % Call the proper SwAMP binary according to the channel being used
+executable_mode = 'swamp'; 		% 0: SwAMP
+							% 1: SwGAMP
+							% 2: C-SwGAMP
 switch opts.channelType
 	case 'gaussian'
-		[a,c,r,s,final_prior] = swamp(y,F,opts);
+		executable_mode = 'swamp';
 	case 'cpr'
-		[a,c,r,s,final_prior] = cswgamp(y,F,opts);
+		executable_mode = 'cswgamp';
 	case 'cgaussian'
-		[a,c,r,s,final_prior] = cswgamp(y,F,opts);
+		executable_mode = 'cswgamp';
 	otherwise
+		executable_mode = 'swgamp';
+end
+
+if isfield(opts,'solver')
+	switch opts.solver
+		case 'amp'
+			executable_mode = 'swamp';
+		case 'amp_alt'		
+			executable_mode = 'swamp';
+		case 'gamp'
+			executable_mode = 'swgamp';
+		case 'cgamp'
+			executable_mode = 'cswgamp';
+	end
+end
+
+switch executable_mode
+	case 'swamp'
+		[a,c,r,s,final_prior] = swamp(y,F,opts);
+	case 'swgamp'
 		[a,c,r,s,final_prior] = swgamp(y,F,opts);
+	case 'cswgamp'
+		[a,c,r,s,final_prior] = cswgamp(y,F,opts);
 end
 
 if mean_removal
