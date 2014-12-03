@@ -27,8 +27,8 @@ function [mses, a, c, r, sig,VFE] = solve_gamp_vfe( y, F, x, ...
     % Initialize variables
     a = zeros(n, 1);
     c = ones(n, 1);
-    % g = zeros(m, 1);
-    g = y;
+    g = zeros(m, 1);
+    %g = y;
 
     % Main loop
     mses = [];
@@ -45,55 +45,50 @@ function [mses, a, c, r, sig,VFE] = solve_gamp_vfe( y, F, x, ...
         % Step 1. Calculate a fixed-point \omega term
         tol = 1e-6;
         maxit = 20;        
-        omega_damp = 0.5;
         reg = 1e-10;
         w_vfe = w;
         v_vfe = v;
-        a_proj = F*a;
-%         fprintf('  Converging \\Omega\n');
+        a_proj = F * a;
         VFE(1) = Inf;
         if t > 1
-            for i=1:maxit
+            for i = 1:maxit
                 % Get the g and g' since these are already coded
-                [g_,dg_] = channel(y,w_vfe,v_vfe,channel_prmts);
+                [g_,dg_] = channel(y, w_vfe, v_vfe, channel_prmts);
+
                 % Convert to Moments
-                xi  = v_vfe.*g_ + w_vfe;
-                phi = (v_vfe).^2.*dg_ + v_vfe;
+                xi = v_vfe .* g_ + w_vfe;
+                phi = (v_vfe).^2 .* dg_ + v_vfe;
+
                 % Use Moment-based Newton's Method to find solution to w^*                
-                step  = a_proj - xi;
+                step = a_proj - xi;
                 scale = -phi ./ v_vfe;
                 w_last = w_vfe;
-                w_vfe = omega_damp.*w_vfe - (1-omega_damp) .* (step)./(scale + reg);                
+                w_vfe = w_vfe - step ./ (scale + reg);                
+
                 % Check for convergence
-                conv_check = norm(w_vfe-w_last)/m;
-                conv_check2 = mean(abs(1 - w_vfe./w_last));
-%                 plot(w_vfe); axis tight;
-%                 drawnow;                            
-%                 fprintf('    [%d] ||Err|| : %0.2e | Conv : %0.2e | Conv2 : %0.2e \n',i,conv_check,norm(w_last-w_vfe)/m,conv_check2);
-                if conv_check2 < tol
+                conv_check = mean(abs(1 - w_vfe ./ w_last));
+                if conv_check < tol
                     break;
                 end
             end
+
             % Now estimate the VFE using these values
-            [~,~,logZu] = channel(y,w_vfe,v_vfe,channel_prmts);
-            [~,~,logZi] = prior(r,sig,prior_prmts);
+            [~, ~, logz_mu] = channel(y, w_vfe, v_vfe, channel_prmts);
+            [~, ~, logz_i] = prior(r, sig, prior_prmts);
+            mu_terms = .5 * (w_vfe - a_proj).^2 ./ v_vfe;
+            i_terms = .5 * (c + (a - r).^2) ./ sig;
+            VFE(t) = -sum(logz_mu) - sum(mu_terms) - sum(logz_i) - sum(i_terms);
             
-            mu_terms = (1./(2.*v_vfe)).*(w_vfe - a_proj).^2;
-            i_terms  = (1./(2.*sig)).*(c + (a-r).^2);
-            
-            VFE(t) = -sum(logZu) - sum(mu_terms) - sum(logZi) - sum(i_terms);
-            
-            if VFE(t) > VFE(t-1)
-                damp = damp.*incup;
-                damp = min(damp,damp_max);
-            else
-                damp = damp.*incdn;
-                damp = max(damp,damp_min);
-            end            
+            %if VFE(t) > VFE(t-1)
+                %damp = damp.*incup;
+                %damp = min(damp,damp_max);
+            %else
+                %damp = damp.*incdn;
+                %damp = max(damp,damp_min);
+            %end            
         end
-        %%%%
     
-        fprintf('Damp : %0.2e\n',damp);
+        %fprintf('Damp : %0.2e\n',damp);
         % Update {sig, r}, {a, c}
         sig_ = -1 ./ ( sqrF' * dg );
         if t>1
@@ -115,7 +110,8 @@ function [mses, a, c, r, sig,VFE] = solve_gamp_vfe( y, F, x, ...
         end
 
         % Accum./print status
-        mses = [mses; sum((a / norm(a) - x / norm(x)) .^ 2)];
+        %mses = [mses; sum((a / norm(a) - x / norm(x)) .^ 2)];
+        mses = [mses mean((a - x).^2)];
     end
     VFE(1) = nan;
 end
@@ -127,8 +123,7 @@ function [g, dg, logz] = channel_gaussian( y, w, v, prmts )
     g = (y - w) ./ (delta + v);
     dg = -1 ./ (delta + v);    
     
-    %%% The LogZ calculation from my notes
-    logz = -0.5*log(2*pi*delta + 2*pi*v) - (y-w).^2./(2*(delta+v));
+    logz = -.5 * log(delta + v) - .5 * (y - w).^2 ./ (delta + v);
 end
 
 function [g, dg] = channel_pm1( y, w, v, prmts )
@@ -154,25 +149,7 @@ function [a, c,logz] = prior_gb( r, sig, prmts )
 
     a = eff ./ (1 + gamma);
     c = bsxfun( @max, gamma .* a .^ 2 + vrp ./ (1 + gamma), 1e-19 );
-        
-    %%% The LogZ calculation from my notes
-    % logz = log(1-rho) + log(rho)  - (r.^2./sig) - (pr_mean-r).^2./(2*(pr_var+sig)) - 0.5*log(2*pi*pr_var + 2*pi*sig);
-    %%% The LogZ calculation from FreeOpt/gb_partition.m
-    s  = sig;
-    m  = pr_mean;
-    v = pr_var;
-    r2 = r.*r;
-    vps = v + s;
-    mmr = m - r;
-    mmr2 = mmr.*mmr;
-    fac = rho .* sqrt(s ./ vps);
-    rsc = -0.5 .* mmr2 ./ vps;    
-
-    %% Log Partition function
-    zOut = log(fac) + rsc;
-    zIn = ((1-rho)./fac) .* exp(-0.5.*r2./s - rsc);
-    logz = zOut + log1p(zIn);
-    
+    logz = log(rho * sqrt(vrp ./ pr_var)) - rsc + log1p(gamma);
 end
 
 function [a, c] = prior_binary( r, sig, prmts )
