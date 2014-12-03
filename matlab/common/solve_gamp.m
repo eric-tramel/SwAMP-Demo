@@ -31,7 +31,7 @@ function [mses, a, c, r, sig] = solve_gamp( y, F, x, ...
         % Update {v, w}, {g, dg}
         v = sqrF * c;
         w = F * a - v .* g;
-        [g, dg, channel_prmts] = channel(y, w, v, channel_prmts);
+        [g, dg, channel_prmts] = channel(y, w, v, channel_prmts);        
 
         % Update {sig, r}, {a, c}
         sig = -1 ./ ( sqrF' * dg );

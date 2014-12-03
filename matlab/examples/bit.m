@@ -15,7 +15,7 @@ function bit(gamma)
     supp = randperm(n, k);
     x(supp) = randn(k, 1);
     F = sparse(gamma / n + randn(m, n) / sqrt(n));
-    y = sign(F * x + sqrt(delta)*randn(m,1));
+    y = sign(F * x);
 
     %% Setup algorithm
     % Obs.: the 'signal' option is only being passed so that the MSE may be
@@ -29,7 +29,7 @@ function bit(gamma)
     opts.priorPrmts = [rho, 0.0, 1.0];
     opts.learnPrior = 0;
     opts.initState = [zeros(n, 1); ones(n, 1)];
-    opts.maxIter = 50;
+    opts.maxIter = 1;
     opts.prec = 1e-5;
     opts.damp = 0;
     opts.display = 1;
@@ -49,7 +49,7 @@ function bit(gamma)
 
     fprintf(' - Running GAMP... ')
     tic
-    [mse_amp, a_amp] = solve_gamp(y, F, x, 'pm1', [delta], 'gb', [rho, 0.0, 1.0], 50, 1e-5);
+    [mse_amp, a_amp] = solve_gamp_vfe(y, F, x, 'pm1', [0.0], 'gb', [rho, 0.0, 1.0], 50, 1e-5);
     elapsed = toc;
     fprintf('Elapsed time: %.2fs, MSE: %.2f dB.\n', elapsed, 10 * log10(mse_amp(end)));
 
