@@ -87,6 +87,7 @@ function [mses, a, c, r, sig,VFE] = solve_gamp_vfe( y, F, x, ...
                 %damp = max(damp,damp_min);
             %end            
         end
+        %%%%
     
         %fprintf('Damp : %0.2e\n',damp);
         % Update {sig, r}, {a, c}
