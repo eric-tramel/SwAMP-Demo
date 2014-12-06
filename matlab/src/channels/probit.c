@@ -1,7 +1,7 @@
 #include "../swgamp.h"
 
 void channel_probit( size_t m, double *y, double *w, double *v, double *prmts, 
-        double *g, double *dg, int learn ) {
+        double *g, double *dg, double *log_z, int learn ) {
     double delta_n, delta_d, delta, v_eff;
     double arg, z, erfcx;
     unsigned int mu;
@@ -34,6 +34,6 @@ void channel_probit( size_t m, double *y, double *w, double *v, double *prmts,
         *g = (*y) / ( sqrt(.5 * M_PI * v_eff) * erfcx );
         *dg = -(*g) * ((*w) / v_eff + (*g));
     } else {
-        for (mu = 0; mu < m; mu++) channel_probit(1, &y[mu], &w[mu], &v[mu], prmts, &g[mu], &dg[mu], 0);
+        for (mu = 0; mu < m; mu++) channel_probit(1, &y[mu], &w[mu], &v[mu], prmts, &g[mu], &dg[mu], NULL, 0);
     }
 }

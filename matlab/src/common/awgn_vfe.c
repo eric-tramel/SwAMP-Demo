@@ -46,7 +46,7 @@ double awgn_vfe	(size_t n, size_t m,
 		/* Estimate dkl_mout */
 		for(mu = 0; mu < m; mu++){
 			dkl_mout += (y[mu] - a_proj[mu])*(y[mu] - a_proj[mu])*(1/(2*(is_array ? delta[mu] : *delta)));
-			dkl_mout += 0.5*log(2*M_PI*(is_array ? delta[mu] : *delta) + 2*M_PI*c_proj[mu]);
+			dkl_mout += 0.5*log((is_array ? delta[mu] : *delta) + c_proj[mu]);
 		}
 
 		/* Estimate dkl_qp */
@@ -77,7 +77,7 @@ double awgn_vfe	(size_t n, size_t m,
 		/* Estimate dkl_mout */
 		for(mu = 0; mu < m; mu++){
 			dkl_mout += (y[mu] - a_proj[mu])*(y[mu] - a_proj[mu])*(1/(2*(is_array ? delta[mu] : *delta)));
-			dkl_mout += 0.5*log(2*M_PI*(is_array ? delta[mu] : *delta) + 2*M_PI*c_proj[mu]);
+			dkl_mout += 0.5*log((is_array ? delta[mu] : *delta) + c_proj[mu]);
 		}
 
 		/* Estimate dkl_qp */
