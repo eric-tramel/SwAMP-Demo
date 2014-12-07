@@ -1,6 +1,6 @@
 
     %% Parameters
-    gamma = 0;
+    gamma = 2;
     n = 2048;
     rho = 0.44;
     alpha = 0.72;
@@ -43,7 +43,7 @@
 
     fprintf(' - Running GAMP... ')
     tic
-    [mse_gamp, ~,~,~,~, gamp_VFE] = solve_gamp_vfe(y, F, x, 'gaussian', [delta], 'gb', [rho, 0.0, 1.0], 2000, opts.prec);
+    [mse_gamp, ~,~,~,~, gamp_VFE] = solve_gamp_vfe(y, F, x, 'gaussian', [delta], 'gb', [rho, 0.0, 1.0], 500, opts.prec);
     elapsed = toc;
     fprintf('Elapsed time: %.2fs, MSE: %.2e.\n', elapsed, mse_gamp(end));
     
@@ -57,8 +57,8 @@
     figure(1); clf;     
     subplot(2,1,1);
         hold on;
-            plot(mse_amp,'-r','DisplayName','AMP MSE');
-            plot(mse_gamp,'-b','DisplayName','GAMP MSE');        
+            plot(mse_amp,'-+r','DisplayName','AMP MSE');
+            plot(mse_gamp,'-^b','DisplayName','GAMP MSE');        
         hold off;
         legend('Location','EastOutside');
         axis tight;
