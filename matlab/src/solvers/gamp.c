@@ -42,10 +42,9 @@ void gamp (
         x_n = sqrt(x_n);
     }
 
+    n_eff = n, m_eff = m;
     if (mean_removal)
-        n_eff = n - 2, m_eff = m - 2;
-    else
-        n_eff = n, m_eff = m;
+        n_eff -= 2, m_eff -= 2;
 
     for (mu = 0; mu < m; mu++) w[mu] = y[mu], v[mu] = 1.;
     channel(m_eff, y, w, v, ch_prmts, g, dg, NULL, 0);
@@ -74,10 +73,8 @@ void gamp (
             g_old[mu] = g[mu];
         }
         channel(m_eff, y, w, v, ch_prmts, g, dg, NULL, 0);
-        if (mean_removal) {
-            g[m - 1] = -w[m - 1] / v[m - 1], g[m - 2] = -w[m - 2] / v[m - 2];
-            dg[m - 1] = -1.0 / v[m - 1], dg[m - 2] = -1.0 / v[m - 2];
-        }
+        for (mu = m_eff; mu < m; mu++)
+            g[mu] = -w[mu] / v[mu], dg[mu] = -1.0 / v[mu];
         /* (channel is delta for auxiliary factors) */ 
 
         /* Sweep over all n variables, in random order */
@@ -97,12 +94,10 @@ void gamp (
             r[i] = damp * r[i] + (1 - damp) * (a[i] + sig[i] * g_proj);
 
             /* Calculate a and c */
-            if (calc_vfe)
-                prior(1, &r[i], &sig[i], pr_prmts, &a[i], &c[i], &logz_i[i], 0); 
+            if (i < n_eff)
+                prior(1, &r[i], &sig[i], pr_prmts, &a[i], &c[i], calc_vfe ? &logz_i[i] : NULL, 0); 
             else
-                prior(1, &r[i], &sig[i], pr_prmts, &a[i], &c[i], NULL, 0); 
-
-            if (i > n_eff) a[i] = r[i], c[i] = sig[i];
+                a[i] = r[i], c[i] = sig[i], logz_i[i] = 1.0;
             /* (prior is uniform for auxiliary variables) */
 
             /* Update {w, v}, {g, dg} */
@@ -141,20 +136,27 @@ void gamp (
 
         mse = 0;
         if (x) {
-            /*a_n = 0;*/
-            /*for (i = 0; i < n_eff; i++)*/
-                /*a_n += pow(a[i], 2);*/
-            /*a_n = sqrt(a_n);*/
+            if (channel == channel_probit) {
+                a_n = 0;
+                for (i = 0; i < n_eff; i++)
+                    a_n += pow(a[i], 2);
+                a_n = sqrt(a_n);
 
-            for (i = 0; i < n_eff; i++)
-                /*mse += pow(a[i] / a_n - x[i] / x_n, 2);*/
-                mse += pow(a[i] - x[i], 2);
-            mse /= n_eff;
+                for (i = 0; i < n_eff; i++) 
+                    mse += pow(a[i] / a_n - x[i] / x_n, 2);
+            } else {
+                for (i = 0; i < n_eff; i++) 
+                    mse += pow(a[i] - x[i], 2);
+                mse /= n_eff;
+            }
         }
 
         /* Print some info. */
-        if (disp)
-            printf("t = %3d: mse = %.4e, RSS = %.4e, diff. = %.4e\n", t, mse, res, diff / n_eff);
+        if (disp) {
+            printf("t = %3d: mse = %.4e, RSS = %.4e, diff. = %.4e", t, mse, res, diff / n_eff);
+            if (calc_vfe) printf(", vfe = %.4g", vfe); 
+            printf("\n");
+        }
         if (output)
             fprintf(output, "%d;%g;%g;%g;%g\n", t, mse, res, diff / n_eff, vfe);
         mexEvalString("drawnow");
