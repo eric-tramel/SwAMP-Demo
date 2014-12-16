@@ -1,8 +1,8 @@
 #include "../swgamp.h"
 
-double vfe_awgn( size_t n, size_t m, double *y, double *F, int *ir, int *jc,
-        double *a, double *c, double *logz_i, double *r, double *sig,
-        double *w, double *v, double *prmts ) {
+double gvfe( size_t n, size_t m, double *y, double *F, int *ir, int *jc,
+        void (*channel) (size_t, double*, double*, double*, double*, double*, double*, double*, int), double *ch_prmts,
+        double *a, double *c, double *logz_i, double *r, double *sig, double *w, double *v ) {
     double *a_proj, *c_proj, *w_fp, *w_old, *v_fp, *g, *dg, *logz_mu;
     double mu_sum, i_sum;
     int i, mu, idx;
@@ -38,7 +38,7 @@ double vfe_awgn( size_t n, size_t m, double *y, double *F, int *ir, int *jc,
         w_fp[mu] = w[mu];
     v_fp = c_proj;
     for (iter = 0; iter < iter_max; iter++) {
-        channel_gaussian(m, y, w_fp, v_fp, prmts, g, dg, NULL, 0);
+        channel(m, y, w_fp, v_fp, ch_prmts, g, dg, NULL, 0);
 
         /* Newton step */
         for (mu = 0; mu < m; mu++) {
@@ -61,13 +61,13 @@ double vfe_awgn( size_t n, size_t m, double *y, double *F, int *ir, int *jc,
 
     /*test = 0.;*/
     /*for (mu = 0; mu < m; mu++) {*/
-        /*delta = prmts[0];*/
+        /*delta = ch_prmts[0];*/
         /*test += pow(w_fp[mu] - y[mu] + (v_fp[mu] + delta) * (y[mu] - a_proj[mu]) / delta, 2);*/
     /*}*/
     /*printf("%g\n", test / m);*/
     
     /* Calculate free energy */
-    channel_gaussian(m, y, w_fp, v_fp, prmts, g, dg, logz_mu, 0);
+    channel(m, y, w_fp, v_fp, ch_prmts, g, dg, logz_mu, 0);
 
     mu_sum = 0., i_sum = 0.;
     for (mu = 0; mu < m; mu++)

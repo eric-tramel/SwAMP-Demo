@@ -17,10 +17,6 @@ void gamp (
     int n_eff, m_eff;
     double vfe, last_vfe;
 
-    double (*compute_vfe) (size_t, size_t, double*, double*, int*, int*,
-            double*, double*, double*, double*, double*,
-            double*, double*, double*);
-
     unsigned int i, mu, idx, t;
     int *seq, key;
 
@@ -39,8 +35,6 @@ void gamp (
         mexErrMsgTxt("Failure in allocating memory.");
 
     /* Init. variables */
-    compute_vfe = &vfe_awgn;
-
     x_n = 0;
     if (x) {
         for (i = 0; i < n; i++) 
@@ -132,7 +126,7 @@ void gamp (
         /* Calculate the post-sweep VFE */
         if (calc_vfe) {
             last_vfe = vfe;
-            vfe = compute_vfe(n, m, y, F, ir, jc, a, c, logz_i, r, sig, w, v, ch_prmts);
+            vfe = gvfe(n, m, y, F, ir, jc, channel, ch_prmts, a, c, logz_i, r, sig, w, v);
         }
 
         /* Update channel and prior parameters */
