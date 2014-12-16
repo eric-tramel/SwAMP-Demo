@@ -83,7 +83,7 @@ void cgamp (
                 v_old = v[mu];
 
                 v[mu] += pow(cabs(F[idx]), 2) * (c[i] - c_old);
-                w[mu] += F[idx] * (a[i] - a_old);
+                w[mu] += F[idx] * (a[i] - a_old)
                     - (v[mu] - v_old) * g_old[mu];
 
                 channel(1, &y[mu], &w[mu], &v[mu], ch_prmts, &g[mu], &dg[mu], 0);
