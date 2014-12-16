@@ -4,8 +4,8 @@ function [mses, a, c, r, sig,VFE] = solve_gamp_vfe( y, F, x, ...
     [m, n] = size(F);
     sqrF = F .* F;
 
-    incup = 1.2;
-    incdn = 0.8;
+    incup = 1.5;
+    incdn = 0.99;
     damp = 0.0;
     damp_max = 0.9999;
     damp_min = 0.0001;
@@ -79,17 +79,17 @@ function [mses, a, c, r, sig,VFE] = solve_gamp_vfe( y, F, x, ...
             i_terms = .5 * (c + (a - r).^2) ./ sig;
             VFE(t) = -sum(logz_mu) - sum(mu_terms) - sum(logz_i) - sum(i_terms);
             
-            %if VFE(t) > VFE(t-1)
-                %damp = damp.*incup;
-                %damp = min(damp,damp_max);
-            %else
-                %damp = damp.*incdn;
-                %damp = max(damp,damp_min);
-            %end            
+            if VFE(t) > VFE(t-1)
+                damp = damp.*incup;
+                damp = min(damp,damp_max);
+            else
+                damp = damp.*incdn;
+                damp = max(damp,damp_min);
+            end            
         end
         %%%%
     
-        %fprintf('Damp : %0.2e\n',damp);
+        fprintf('Damp : %0.2e\n',damp);
         % Update {sig, r}, {a, c}
         sig_ = -1 ./ ( sqrF' * dg );
         if t>1
