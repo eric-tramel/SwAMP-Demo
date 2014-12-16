@@ -8,10 +8,11 @@ double gvfe( size_t n, size_t m, double *y, double *F, int *ir, int *jc,
     int i, mu, idx;
 
     int iter;
-    double step, scale, diff;
-    int iter_max = 50;
+    double step, scale, diff, res;
+    int iter_max = 100;
     double tol = 1e-9, reg = 1e-13;
-    double test, delta;
+
+    /*double test, delta;*/
 
     /* Allocate structures */
     a_proj = malloc(sizeof(double) * m);
@@ -53,11 +54,11 @@ double gvfe( size_t n, size_t m, double *y, double *F, int *ir, int *jc,
         for (mu = 0; mu < m; mu++) 
             diff += fabs(1. - w_fp[mu] / w_old[mu]);
         if (diff / m < tol) {
-            /*printf("Finished in %d iterations. ", iter);*/
+            printf("Finished in %d iterations. ", iter);
             break;
         }
     }
-    /*printf ("Diff.: %.4g\n", diff / m);*/
+    printf ("Diff.: %.4g\n", diff / m);
 
     /*test = 0.;*/
     /*for (mu = 0; mu < m; mu++) {*/
@@ -67,13 +68,18 @@ double gvfe( size_t n, size_t m, double *y, double *F, int *ir, int *jc,
     /*printf("%g\n", test / m);*/
     
     /* Calculate free energy */
-    channel(m, y, w_fp, v_fp, ch_prmts, g, dg, logz_mu, 0);
+    if (diff / m > tol) {
+        res = NAN;
+    } else {
+        channel(m, y, w_fp, v_fp, ch_prmts, g, dg, logz_mu, 0);
 
-    mu_sum = 0., i_sum = 0.;
-    for (mu = 0; mu < m; mu++)
-        mu_sum += logz_mu[mu] + .5 * pow(w_fp[mu] - a_proj[mu], 2) / v_fp[mu];
-    for (i = 0; i < n; i++)
-        i_sum += logz_i[i] + .5 * (c[i] + pow(a[i] - r[i], 2)) / sig[i];
+        mu_sum = 0., i_sum = 0.;
+        for (mu = 0; mu < m; mu++)
+            mu_sum += logz_mu[mu] + .5 * pow(w_fp[mu] - a_proj[mu], 2) / v_fp[mu];
+        for (i = 0; i < n; i++)
+            i_sum += logz_i[i] + .5 * (c[i] + pow(a[i] - r[i], 2)) / sig[i];
+        res = -mu_sum - i_sum;
+    }
 
-    return -mu_sum - i_sum;
+    return res;
 }

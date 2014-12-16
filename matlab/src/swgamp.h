@@ -1,6 +1,10 @@
 #include "mex.h"
 #include <string.h>
 #include <math.h>
+#include <gsl/gsl_sf_erf.h>
+#include <gsl/gsl_errno.h>
+
+#define LOG_2 0.69314718055994529
 
 /* SOLVERS */
 void gamp ( 

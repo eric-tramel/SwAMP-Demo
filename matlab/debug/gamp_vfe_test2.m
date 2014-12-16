@@ -60,9 +60,9 @@ elapsed = toc;
 out = dlmread(outfile, ';', 1, 0);
 mse_swamp = out(:, 2);
 vfe_swamp = out(:, 6);
-vfe_swamp_pos = vfe_swamp(vfe_swamp > 0)
-vfe_swamp_neg = vfe_swamp(vfe_swamp < 0)
 fprintf('Elapsed time: %.2fs, MSE: %.2e dB.\n', elapsed, mse_swamp(end)); 
+
+vfe_swamp_pos = vfe_swamp - min(vfe_swamp)
 
 %% Run with SwGAMP
 fprintf(' - Running SwGAMP... ')
@@ -74,13 +74,12 @@ elapsed = toc;
 out = dlmread(outfile, ';', 1, 0);
 mse_swgamp = out(:, 2);
 vfe_swgamp = out(:, 5);
-vfe_swgamp_pos = vfe_swgamp(vfe_swgamp > 0);
-vfe_swgamp_neg = vfe_swgamp(vfe_swgamp < 0);
 fprintf('Elapsed time: %.2fs, MSE: %.2e dB.\n', elapsed, mse_swgamp(end)); 
+
+vfe_swgamp_pos = vfe_swgamp - min(vfe_swgamp);
 
 %% Plot results
 fig = figure(1); clf;
-    subplot(2, 1, 1);
     hold on;
         plot(mse_swamp,'-b',   'LineWidth',1,'DisplayName','AMP MSE ');
         plot(vfe_swamp_pos,'-r',   'LineWidth',1,'DisplayName','AMP VFE ');        
@@ -91,19 +90,8 @@ fig = figure(1); clf;
     set(gca,'YScale','log');
     xlim([0, length(vfe_swamp)]);
 
-    subplot(2, 1, 2);
-
-    x_swamp = find(vfe_swamp < 0);
-    x_swgamp = find(vfe_swgamp < 0);
-    hold on;
-        plot(x_swamp, vfe_swamp_neg, '-r',   'LineWidth',1,'DisplayName','AMP VFE ');        
-        plot(x_swgamp, vfe_swgamp_neg, ':r',   'LineWidth',1,'DisplayName','GAMP VFE');        
-    hold off;
-    set(gca,'YScale','log');    
-    xlim([0, length(vfe_swamp)]);
-
     xlabel('Iteration');
-    %box on;
-    %axis tight;
-    %legend('Location','EastOutside');
+    box on;
+    axis tight;
+    legend('Location','EastOutside');
 print(fig, '-dpng', 'test.png');
