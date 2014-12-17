@@ -76,22 +76,46 @@ mse_swgamp = out(:, 2);
 vfe_swgamp = out(:, 5);
 fprintf('Elapsed time: %.2fs, MSE: %.2e dB.\n', elapsed, mse_swgamp(end)); 
 
-vfe_swgamp_pos = vfe_swgamp - min(vfe_swgamp);
-
 %% Plot results
+label_options = {'Interpreter','latex','FontSize',14};
+title_options = {'Interpreter','latex','FontSize',16};
+titlestr = sprintf('SwAMP vs. SwGAMP for AWGN channel\n $N = %d$, $\\rho = %0.2f$,$\\alpha = %0.2f$,$\\Delta = %0.2e$,$\\gamma = %0.1f$',n,rho,alpha,delta,gamma);
+% MSE Comparison Plot
 fig = figure(1); clf;
-    hold on;
-        plot(mse_swamp,'-b',   'LineWidth',1,'DisplayName','AMP MSE ');
-        plot(vfe_swamp_pos,'-r',   'LineWidth',1,'DisplayName','AMP VFE ');        
-        
-        plot(mse_swgamp,':b',   'LineWidth',1,'DisplayName','GAMP MSE');
-        plot(vfe_swgamp_pos,':r',   'LineWidth',1,'DisplayName','GAMP VFE');        
+    hold on;                             
+        plot(mse_swgamp,'-xr',   'LineWidth',1,'DisplayName','GAMP MSE');        
+        plot(mse_swamp,'-b',   'LineWidth',1,'DisplayName','AMP MSE ');  
     hold off;
-    set(gca,'YScale','log');
-    xlim([0, length(vfe_swamp)]);
-
-    xlabel('Iteration');
+    xlabel('Iteration',label_options{:});
+    ylabel('MSE',label_options{:});
+    set(gca,'YScale','log');    
     box on;
     axis tight;
-    legend('Location','EastOutside');
-print(fig, '-dpng', 'test.png');
+    legend('Location','NorthEast');
+    title(titlestr,title_options{:});
+if exist('export_fig')
+    export_fig('swamp-to-swgamp-AWGN-mse.png','-png','-nocrop','-transparent','-r150');
+else 
+    print(fig, '-dpng', 'swamp-to-swgamp-AWGN-mse.png');
+end
+
+% VFE Comparisons Plot
+fig = figure(2); clf;
+    shifted_vfe_swamp   = vfe_swamp - (min(vfe_swamp)) + 1;
+    shifted_vfe_swgamp  = vfe_swgamp - (min(vfe_swgamp)) + 1;
+    hold on;        
+        plot(shifted_vfe_swgamp,'-xr',   'LineWidth',1,'DisplayName','GAMP VFE');                
+        plot(shifted_vfe_swamp, '-b',   'LineWidth',1,'DisplayName','AMP VFE '); 
+    hold off;
+    xlabel('Iteration',label_options{:});
+    ylabel('Positive-Shifted VFE',label_options{:});
+    set(gca,'YScale','log');
+    box on; axis tight;
+    legend('Location','NorthEast');
+    title(titlestr,title_options{:});
+if exist('export_fig')
+    export_fig('swamp-to-swgamp-AWGN-vfe.png','-png','-nocrop','-transparent','-r150');
+else 
+    print(fig, '-dpng', 'swamp-to-swgamp-AWGN-vfe.png');
+end
+
